@@ -1,0 +1,27 @@
+#include "config.h"
+
+1 VERSIONINFO
+FILEVERSION VPNGUI_VERSION_RC
+PRODUCTVERSION VPNGUI_VERSION_RC
+FILEOS 0x4
+FILETYPE 0x0
+BEGIN
+  BLOCK "StringFileInfo"
+  BEGIN
+    BLOCK "040904B0"
+    BEGIN
+      VALUE "CompanyName", VPNGUI_ORGNAME
+      VALUE "FileDescription", VPNGUI_DISPLAY_NAME
+      VALUE "FileVersion", VPNGUI_VERSION
+      VALUE "InternalName", VPNGUI_NAME
+      VALUE "OriginalFilename", VPNGUI_EXENAME
+      VALUE "ProductName", VPNGUI_DISPLAY_NAME
+      VALUE "ProductVersion", VPNGUI_VERSION
+    END
+  END
+
+  BLOCK "VarFileInfo"
+  BEGIN
+    VALUE "Translation", 0x0409, 0x04B0
+  END
+END
