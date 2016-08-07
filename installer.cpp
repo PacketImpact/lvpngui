@@ -11,8 +11,6 @@
 #include <QCoreApplication>
 #include <QMessageBox>
 
-#ifdef WIN32
-
 #include "windows.h"
 #include "winnls.h"
 #include "shobjidl.h"
@@ -70,7 +68,64 @@ bool createLink(QString linkPath, QString destPath, QString desc) {
     return success;
 }
 
-#endif
+bool isTAPInstalled(bool w64) {
+    HKEY hKey;
+    REGSAM samDesired = KEY_READ;
+    if (w64) {
+        samDesired |= KEY_WOW64_64KEY;
+    }
+    LONG lRes = RegOpenKeyExW(HKEY_LOCAL_MACHINE, TEXT("SOFTWARE\\TAP-Windows"), 0, samDesired, &hKey);
+
+    if (lRes != ERROR_SUCCESS) {
+        qDebug() << "Failed to open key:" << lRes;
+        return false;
+    }
+
+    WCHAR szBuffer[512];
+    DWORD dwBufferSize = sizeof(szBuffer);
+    ULONG nError;
+    nError = RegQueryValueEx(hKey, NULL, 0, NULL, (LPBYTE)szBuffer, &dwBufferSize);
+    if (ERROR_SUCCESS != nError) {
+        qDebug() << "Failed to get value:" << nError;
+        return false;
+    }
+
+    std::wstring tapPath(szBuffer);
+    QDir binDir(QString::fromStdWString(tapPath));
+    QString binPath(binDir.filePath("bin\\tapinstall.exe"));
+
+    QStringList args;
+    args.append("find");
+    args.append("tap0901");
+
+    QProcess tapTest;
+    tapTest.setProcessChannelMode(QProcess::MergedChannels);
+    tapTest.start(binPath, args);
+    if (!tapTest.waitForFinished(3000)) {
+        tapTest.kill();
+    }
+
+    QString output(QString::fromLocal8Bit(tapTest.readAll()));
+    QStringList lines(output.split("\r\n", QString::SkipEmptyParts));
+    qDebug() << lines;
+
+    QString lastLine(lines.last());
+    if (!lastLine.endsWith(" matching device(s) found.")) {
+        return false;
+    }
+
+    QStringList words(lastLine.split(' '));
+    QString nStr(words[0]);
+    bool ok = false;
+    int n = nStr.toInt(&ok);
+
+    if (!ok || n < 1) {
+        return false;
+    }
+
+    qDebug() << "TAP found!";
+    return true;
+}
 
 QByteArray hashFile(QString path) {
     QFile f(path);
@@ -136,6 +191,10 @@ bool Installer::isInstalled() {
         return false;
     }
 
+    if (!isTAPInstalled(getArch() == "64")) {
+        return false;
+    }
+
     return true;
 }
 
@@ -187,7 +246,15 @@ void Installer::install() {
         throw std::runtime_error("Cannot copy file: " + appSrcPath.toStdString() + " -> " + appLocPath.toStdString());
     }
 
-#ifdef WIN32
+    // Start TAP installation
+    // I'd like to make this silent (/S) but since it may take some time and
+    // ask a confirmation for the driver, I think it's better to show something.
+    if (!isTAPInstalled(getArch() == "64")) {
+        QProcess tapInstaller;
+        tapInstaller.start(m_baseDir.filePath("tap-windows.exe"));
+        tapInstaller.waitForFinished(-1);
+    }
+
     // Make a desktop shortcut
     QMessageBox::StandardButton r = QMessageBox::question(NULL, m_vpngui.getDisplayName(),
                                                           m_vpngui.getDisplayName() + " has been installed. Create a desktop shortcut?");
@@ -199,7 +266,6 @@ void Installer::install() {
             throw std::runtime_error("Failed to create link: " + shortcut.toStdString() + " -> " + appLocPath.toStdString());
         }
     }
-#endif
 }
 
 void Installer::loadIndex() {
