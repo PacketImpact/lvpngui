@@ -12,6 +12,8 @@ and being customized and distributed by the VPN service provider.
 - remembers username and passwords for the current user.
   (and tries not to store it in plaintext)
 
+![Log](http://i.imgur.com/pgPz3s7.png)
+![Settings](http://i.imgur.com/JwpuEtv.png)
 
 ## Building
 
