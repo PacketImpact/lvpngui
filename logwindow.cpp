@@ -12,7 +12,7 @@ LogWindow::LogWindow(QWidget *parent, const VPNGUI &vpngui, const OpenVPN &openv
     , ui(new Ui::LogWindow)
 {
     ui->setupUi(this);
-    setWindowTitle(vpngui.getDisplayName() + " Log");
+    setWindowTitle(vpngui.getDisplayName() + " " + tr("Log"));
 
     connect(ui->closeButton, SIGNAL(clicked(bool)), this, SLOT(close()));
     connect(ui->copyButton, SIGNAL(clicked(bool)), this, SLOT(copyLog()));

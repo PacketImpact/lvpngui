@@ -13,14 +13,14 @@ SettingsWindow::SettingsWindow(QWidget *parent, const VPNGUI &vpngui, QSettings 
 {
     ui->setupUi(this);
 
-    setWindowTitle(vpngui.getDisplayName() + " Settings");
+    setWindowTitle(vpngui.getDisplayName() + " " + tr("Settings"));
 
     ui->aboutTitleLabel->setText(vpngui.getDisplayName());
-    ui->aboutVersionLabel->setText("Version " + vpngui.getFullVersion());
+    ui->aboutVersionLabel->setText(tr("Version %1").arg(vpngui.getFullVersion()));
 
-    QString aboutBaseText("<a href='" VPNGUI_URL "'>" VPNGUI_DISPLAY_NAME "</a>");
-    aboutBaseText.append(" by ");
-    aboutBaseText.append("<a href='" VPNGUI_ORGURL "'>" VPNGUI_ORGNAME "</a>");
+    QString aboutBaseText(tr("%1 by %2"));
+    aboutBaseText = aboutBaseText.arg("<a href='" VPNGUI_URL "'>" VPNGUI_DISPLAY_NAME "</a>",
+                                      "<a href='" VPNGUI_ORGURL "'>" VPNGUI_ORGNAME "</a>");
     ui->aboutBaseLabel->setText(aboutBaseText);
 
     QString style("QLabel a { color: black; }");

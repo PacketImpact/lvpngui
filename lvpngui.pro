@@ -39,6 +39,8 @@ FORMS    += \
 RESOURCES += \
     res.qrc
 
+TRANSLATIONS += translations/lvpngui_fr.ts
+
 QMAKE_CXXFLAGS += -static-libgcc -static-libstdc++
 
 DISTFILES += \

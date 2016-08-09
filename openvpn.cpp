@@ -64,7 +64,7 @@ bool OpenVPN::connect(const QString &configPath) {
 
     QString portStr(QString::number(m_mgmtPort));
 
-    logStatus("Connecting...");
+    logStatus(tr("Connecting..."));
     logStatus(m_openvpnPath);
     logStatus("Management: " + m_mgmtHost + ":" + portStr);
     logStatus("Config: " + configPath);
@@ -96,7 +96,7 @@ bool OpenVPN::connect(const QString &configPath) {
 void OpenVPN::disconnect() {
     m_abort = true;
 
-    logStatus("Disconnecting");
+    logStatus(tr("Disconnecting..."));
     mgmtSend("signal SIGTERM");
     m_openvpnProc.terminate();
 
@@ -135,11 +135,11 @@ void OpenVPN::procReadyRead() {
 }
 
 void OpenVPN::procError(QProcess::ProcessError) {
-    logStatus("Error: " + m_openvpnProc.errorString());
+    logStatus(tr("Error:") + " " + m_openvpnProc.errorString());
 }
 
 void OpenVPN::procFinished(int exitCode, QProcess::ExitStatus) {
-    logStatus("Finished: code=" + QString::number(exitCode));
+    logStatus(tr("Finished:") + " code=" + QString::number(exitCode));
 
     emit disconnected();
 }

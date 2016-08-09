@@ -100,11 +100,11 @@ VPNGUI::VPNGUI(QObject *parent)
     , m_logWindow(NULL)
     , m_settingsWindow(NULL)
 {
-    m_connectMenu = m_trayMenu.addMenu("Connect");
-    m_disconnectAction = m_trayMenu.addAction("Disconnect");
-    QAction *logAction = m_trayMenu.addAction("View Log");
-    QAction *settingsAction = m_trayMenu.addAction("Settings");
-    QAction *quitAction = m_trayMenu.addAction("Quit");
+    m_connectMenu = m_trayMenu.addMenu(tr("Connect"));
+    m_disconnectAction = m_trayMenu.addAction(tr("Disconnect"));
+    QAction *logAction = m_trayMenu.addAction(tr("View Log"));
+    QAction *settingsAction = m_trayMenu.addAction(tr("Settings"));
+    QAction *quitAction = m_trayMenu.addAction(tr("Quit"));
 
     m_disconnectAction->setDisabled(true);
 
@@ -119,11 +119,11 @@ VPNGUI::VPNGUI(QObject *parent)
     connect(&m_openvpn, SIGNAL(connected()), this, SLOT(vpnConnected()));
     connect(&m_openvpn, SIGNAL(disconnected()), this, SLOT(vpnDisconnected()));
 
-    //m_trayIcon.showMessage("hi", );
-
     if (!m_installer.isInstalled()) {
         m_installer.install();
-        m_trayIcon.showMessage("Installed", getDisplayName() + " is now installed! (version " + getFullVersion() + ")");
+        m_trayIcon.showMessage(tr("Installed"),
+                               tr("%1 is now installed! (version %2)")
+                               .arg(getDisplayName(), getFullVersion()));
     }
 
     // Cleanup OpenVPN config dir
@@ -309,13 +309,13 @@ void VPNGUI::vpnDisconnect() {
 }
 
 void VPNGUI::vpnConnected() {
-    m_trayIcon.showMessage("Connected", "VPN successfully connected.");
+    m_trayIcon.showMessage(tr("Connected"), tr("VPN successfully connected."));
 }
 
 void VPNGUI::vpnDisconnected() {
     m_connectMenu->setDisabled(false);
     m_disconnectAction->setDisabled(true);
-    m_trayIcon.showMessage("Disconnected", "VPN disconnected.");
+    m_trayIcon.showMessage(tr("Disconnected"), tr("VPN disconnected."));
 }
 
 
@@ -397,7 +397,7 @@ void VPNGUI::gatewaysQueryFinished() {
     }
 
     if (m_gatewaysReply->error()) {
-        m_trayIcon.showMessage("Gateways update error", m_gatewaysReply->errorString());
+        m_trayIcon.showMessage(tr("Gateways update error"), m_gatewaysReply->errorString());
         return;
     }
 

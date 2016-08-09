@@ -2,6 +2,7 @@
     <qresource prefix="/">
         <file alias="icon.png">res/icon.png</file>
         <file alias="branding.ini">res/branding.ini</file>
+        <file>translations/lvpngui_fr.qm</file>
     </qresource>
     <qresource prefix="/bin32">
         <file alias="libeay32.dll">openvpn-32/libeay32.dll</file>

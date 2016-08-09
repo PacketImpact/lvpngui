@@ -7,7 +7,7 @@ AuthDialog::AuthDialog(QWidget *parent, const VPNGUI &vpngui)
     , ui(new Ui::AuthDialog)
 {
     ui->setupUi(this);
-    setWindowTitle(vpngui.getDisplayName() + " Authentication");
+    setWindowTitle(vpngui.getDisplayName() + " " + tr("Authentication"));
 }
 
 AuthDialog::~AuthDialog() {

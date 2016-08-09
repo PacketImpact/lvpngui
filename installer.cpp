@@ -231,8 +231,9 @@ void Installer::install() {
     if (QFile(appLocPath).exists()) {
         while (!QFile(appLocPath).remove()) {
             QMessageBox::StandardButton r;
-            r = QMessageBox::warning(NULL, m_vpngui.getDisplayName(),
-                                     m_vpngui.getDisplayName() + " is already running. Please close it to upgrade.",
+            QString msg(QCoreApplication::tr("%1 is already running. Please close it to upgrade."));
+            msg = msg.arg(m_vpngui.getDisplayName());
+            r = QMessageBox::warning(NULL, m_vpngui.getDisplayName(), msg,
                                      QMessageBox::Cancel | QMessageBox::Ok);
             if (r == QMessageBox::Cancel) {
                 break;
@@ -256,8 +257,9 @@ void Installer::install() {
     }
 
     // Make a desktop shortcut
-    QMessageBox::StandardButton r = QMessageBox::question(NULL, m_vpngui.getDisplayName(),
-                                                          m_vpngui.getDisplayName() + " has been installed. Create a desktop shortcut?");
+    QString lnkMsg(QCoreApplication::tr("%1 has been installed. Create a desktop shortcut?"));
+    lnkMsg = lnkMsg.arg(m_vpngui.getDisplayName());
+    QMessageBox::StandardButton r = QMessageBox::question(NULL, m_vpngui.getDisplayName(), lnkMsg);
     if (r == QMessageBox::Yes) {
         QDir homeDir(QString(qgetenv("USERPROFILE")));
         QDir desktopDir(homeDir.filePath("Desktop"));
