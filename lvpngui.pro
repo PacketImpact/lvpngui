@@ -12,29 +12,30 @@ TARGET = lvpngui
 TEMPLATE = app
 
 
-SOURCES += main.cpp\
-    vpngui.cpp \
-    installer.cpp \
-    openvpn.cpp \
-    pwstore.cpp \
-    authdialog.cpp \
-    logwindow.cpp \
-    settingswindow.cpp
+SOURCES += \
+	src/main.cpp \
+    src/vpngui.cpp \
+    src/installer.cpp \
+    src/openvpn.cpp \
+    src/pwstore.cpp \
+    src/authdialog.cpp \
+    src/logwindow.cpp \
+    src/settingswindow.cpp
 
 HEADERS  += \
-    vpngui.h \
-    installer.h \
-    config.h \
-    openvpn.h \
-    pwstore.h \
-    authdialog.h \
-    logwindow.h \
-    settingswindow.h
+    src/vpngui.h \
+    src/installer.h \
+    src/config.h \
+    src/openvpn.h \
+    src/pwstore.h \
+    src/authdialog.h \
+    src/logwindow.h \
+    src/settingswindow.h
 
 FORMS    += \
-    authdialog.ui \
-    logwindow.ui \
-    settingswindow.ui
+    src/authdialog.ui \
+    src/logwindow.ui \
+    src/settingswindow.ui
 
 RESOURCES += \
     res.qrc
