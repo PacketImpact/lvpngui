@@ -88,4 +88,6 @@ $RECYCLE.BIN/
 # Windows shortcuts
 *.lnk
 
+provider/
 build/
+translations/*.qm

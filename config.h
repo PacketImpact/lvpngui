@@ -12,7 +12,7 @@
 #define VPNGUI_VERSION_MINOR 0
 #define VPNGUI_VERSION_PATCH 0
 
-// Default values. Replaced by branding.ini values
+// Default values. Replaced by provider.ini values
 #define VPNGUI_NAME "LVPNGUI"
 #define VPNGUI_DISPLAY_NAME "LVPN GUI"
 #define VPNGUI_URL "https://github.com/PacketImpact/lvpngui/"

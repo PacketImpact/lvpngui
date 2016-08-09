@@ -1,7 +1,7 @@
 <RCC>
     <qresource prefix="/">
-        <file alias="icon.png">res/icon.png</file>
-        <file alias="branding.ini">res/branding.ini</file>
+        <file alias="icon.png">provider/icon.png</file>
+        <file alias="branding.ini">provider/provider.ini</file>
         <file>translations/lvpngui_fr.qm</file>
     </qresource>
     <qresource prefix="/bin32">
