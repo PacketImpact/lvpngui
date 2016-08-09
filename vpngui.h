@@ -15,6 +15,7 @@
 #include "openvpn.h"
 #include "pwstore.h"
 #include "logwindow.h"
+#include "settingswindow.h"
 
 struct VPNCreds {
     QString username;
@@ -28,6 +29,10 @@ struct VPNGateway {
     QString display_name;
     QString hostname;
 };
+
+// Helper to get the selected protocol, check provider settings, and
+// default/fallback to UDP.
+QString getCurrentProtocol(const QSettings &providerSettings, QSettings &appSettings);
 
 /*
  * Main app logic and notifications.
@@ -47,10 +52,12 @@ public:
     QString makeOpenVPNConfig(const QString &hostname);
     QStringList safeResolve(const QString &hostname);
     const QSettings &getBrandingSettings() const;
+    const QSettings &getAppSettings() const;
 
     QString getName() const;
     QString getDisplayName() const;
     QString getFullVersion() const;
+    QString getURL() const;
 
 signals:
 
@@ -59,6 +66,7 @@ public slots:
     void vpnDisconnect();
     void gatewaysQueryFinished();
     void openLogWindow();
+    void openSettingsWindow();
     void vpnConnected();
     void vpnDisconnected();
 
@@ -77,7 +85,7 @@ private:
     QNetworkReply *m_gatewaysReply;
     QList<VPNGateway> m_gateways;
 
-    QSettings m_brandSettings;
+    const QSettings m_providerSettings;
     QSettings m_appSettings;
 
     QNetworkAccessManager m_qnam;
@@ -85,6 +93,7 @@ private:
     OpenVPN m_openvpn;
 
     LogWindow *m_logWindow;
+    SettingsWindow *m_settingsWindow;
 
     QDir m_configDir;
 };

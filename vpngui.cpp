@@ -48,7 +48,7 @@ QStringList VPNGUI::safeResolve(const QString &hostname) {
 
 
     // 1. Custom nameserver
-    QString appNs(m_appSettings.value("nameserver").toString());
+    QString appNs(m_appSettings.value("dns_api").toString());
     if (!appNs.isEmpty()) {
         nameservers.append(appNs);
     }
@@ -57,9 +57,9 @@ QStringList VPNGUI::safeResolve(const QString &hostname) {
     nameservers.append("");
 
     // 3. Brand nameserver
-    QString brandNs(m_brandSettings.value("nameserver").toString());
-    if (!brandNs.isEmpty()) {
-        nameservers.append(brandNs);
+    QString providerNs(m_providerSettings.value("nameserver").toString());
+    if (!providerNs.isEmpty()) {
+        nameservers.append(providerNs);
     }
 
     // 4. Fallback
@@ -92,16 +92,18 @@ VPNGUI::VPNGUI(QObject *parent)
     , m_trayMenu()
     , m_trayIcon(this)
     , m_gatewaysReply(NULL)
-    , m_brandSettings(":/branding.ini", QSettings::IniFormat)
+    , m_providerSettings(":/branding.ini", QSettings::IniFormat)
     , m_appSettings(VPNGUI_ORGNAME, getName())
     , m_qnam(this)
     , m_installer(*this)
     , m_openvpn(this, m_installer.getDir().filePath("openvpn.exe"))
     , m_logWindow(NULL)
+    , m_settingsWindow(NULL)
 {
     m_connectMenu = m_trayMenu.addMenu("Connect");
     m_disconnectAction = m_trayMenu.addAction("Disconnect");
     QAction *logAction = m_trayMenu.addAction("View Log");
+    QAction *settingsAction = m_trayMenu.addAction("Settings");
     QAction *quitAction = m_trayMenu.addAction("Quit");
 
     m_disconnectAction->setDisabled(true);
@@ -111,6 +113,7 @@ VPNGUI::VPNGUI(QObject *parent)
 
     connect(quitAction, SIGNAL(triggered(bool)), QApplication::instance(), SLOT(quit()));
     connect(logAction, SIGNAL(triggered(bool)), this, SLOT(openLogWindow()));
+    connect(settingsAction, SIGNAL(triggered(bool)), this, SLOT(openSettingsWindow()));
     connect(m_disconnectAction, SIGNAL(triggered(bool)), this, SLOT(vpnDisconnect()));
 
     connect(&m_openvpn, SIGNAL(connected()), this, SLOT(vpnConnected()));
@@ -148,20 +151,24 @@ VPNGUI::~VPNGUI() {
 }
 
 QString VPNGUI::getName() const {
-    return m_brandSettings.value("name", VPNGUI_NAME).toString();
+    return m_providerSettings.value("name", VPNGUI_NAME).toString();
 }
 
 QString VPNGUI::getDisplayName() const {
-    return m_brandSettings.value("display_name", VPNGUI_DISPLAY_NAME).toString();
+    return m_providerSettings.value("display_name", VPNGUI_DISPLAY_NAME).toString();
 }
 
 QString VPNGUI::getFullVersion() const {
-    QString brandedVersion = m_brandSettings.value("version").toString();
+    QString brandedVersion = m_providerSettings.value("version").toString();
     QString fullVersion(VPNGUI_VERSION);
     if (brandedVersion.length() > 0) {
         fullVersion += "-" + brandedVersion;
     }
     return fullVersion;
+}
+
+QString VPNGUI::getURL() const {
+    return m_providerSettings.value("url", VPNGUI_URL).toString();
 }
 
 void VPNGUI::openLogWindow() {
@@ -176,10 +183,21 @@ void VPNGUI::openLogWindow() {
     m_logWindow->show();
 }
 
+void VPNGUI::openSettingsWindow() {
+    // Clean up any previous SettingsWindow
+    if (m_settingsWindow) {
+        m_settingsWindow->close();
+        delete m_settingsWindow;
+    }
+
+    m_settingsWindow = new SettingsWindow(NULL, *this, m_appSettings);
+    m_settingsWindow->show();
+}
+
 void VPNGUI::queryGateways() {
     QNetworkRequest request;
 
-    QString url(m_brandSettings.value("locations_url").toString());
+    QString url(m_providerSettings.value("locations_url").toString());
 
     if (url.isEmpty()) {
         return;
@@ -328,18 +346,39 @@ QString VPNGUI::makeOpenVPNConfig(const QString &hostname) {
     s << "redirect-gateway def1\n";
     s << "remote-random\n";
 
-    if (m_brandSettings.value("enable_ipv6", true).toBool()
-        && m_appSettings.value("enable_ipv6", true).toBool()) {
+    if (m_providerSettings.value("enable_ipv6", true).toBool()
+        && m_appSettings.value("ipv6_tunnel", true).toBool()) {
         s << "tun-ipv6\n";
         s << "route-ipv6 2000::/3\n";
     }
 
     // Ca
-    s << "<ca>\n" << m_brandSettings.value("openvpn_ca").toString() << "\n</ca>\n";
+    s << "<ca>\n" << m_providerSettings.value("openvpn_ca").toString() << "\n</ca>\n";
 
     // Remote
+    QString remoteParams;
+    QString protocol(getCurrentProtocol(m_providerSettings, m_appSettings));
+    if (protocol == "udp") {
+        remoteParams = "1196 udp";
+    } else if (protocol == "udpl") {
+        remoteParams = "1194 udp";
+    } else if (protocol == "tcp") {
+        remoteParams = "443 tcp";
+    }
+
     foreach (QString addr, safeResolve(hostname)) {
-        s << "remote " << addr << " 1196 udp\n";
+        s << "remote " << addr << " " << remoteParams << "\n";
+    }
+
+    // Options
+    QString httpProxy(m_appSettings.value("http_proxt").toString());
+    QString dns(m_appSettings.value("dns_system").toString());
+
+    if (!httpProxy.isEmpty()) {
+        s << "http-proxy " << httpProxy << "\n";
+    }
+    if (!dns.isEmpty()) {
+        s << "dhcp-option DNS " << dns << "\n";
     }
 
     s.flush();
@@ -381,7 +420,32 @@ void VPNGUI::gatewaysQueryFinished() {
 }
 
 const QSettings &VPNGUI::getBrandingSettings() const {
-    return m_brandSettings;
+    return m_providerSettings;
 }
 
+const QSettings &VPNGUI::getAppSettings() const {
+    return m_appSettings;
+}
 
+QString getCurrentProtocol(const QSettings &providerSettings, QSettings &appSettings) {
+    QString defaultProtocol(providerSettings.value("default_protocol", "udp").toString());
+    QString currentProtocol(appSettings.value("protocol", defaultProtocol).toString());
+
+    QSet<QString> knownProtocols;
+    knownProtocols << "udp" << "udpl" << "tcp";
+
+    // Check protocols are supported
+    foreach (QString p, knownProtocols) {
+        if (!providerSettings.value("protocol_" + p, false).toBool()) {
+            knownProtocols.remove(p);
+        }
+    }
+
+    // Check currentProtocol (to always have an option checked)
+    if (!knownProtocols.contains(currentProtocol)) {
+        currentProtocol = defaultProtocol;
+        appSettings.setValue("protocol", defaultProtocol);
+    }
+
+    return currentProtocol;
+}

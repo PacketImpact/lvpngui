@@ -18,7 +18,8 @@ SOURCES += main.cpp\
     openvpn.cpp \
     pwstore.cpp \
     authdialog.cpp \
-    logwindow.cpp
+    logwindow.cpp \
+    settingswindow.cpp
 
 HEADERS  += \
     vpngui.h \
@@ -27,11 +28,13 @@ HEADERS  += \
     openvpn.h \
     pwstore.h \
     authdialog.h \
-    logwindow.h
+    logwindow.h \
+    settingswindow.h
 
 FORMS    += \
     authdialog.ui \
-    logwindow.ui
+    logwindow.ui \
+    settingswindow.ui
 
 RESOURCES += \
     res.qrc
