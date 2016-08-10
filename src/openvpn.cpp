@@ -99,9 +99,8 @@ void OpenVPN::disconnect() {
     logStatus(tr("Disconnecting..."));
     mgmtSend("signal SIGTERM");
     m_openvpnProc.terminate();
-
-    // Kill the process after 5 seconds
-    QTimer::singleShot(5000, &m_openvpnProc, SLOT(kill()));
+    m_openvpnProc.waitForFinished(1000);
+    m_openvpnProc.kill();
 }
 
 void OpenVPN::logStatus(const QString &line) {

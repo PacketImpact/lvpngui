@@ -67,6 +67,7 @@ public:
     void updateGatewayList();
     QString makeOpenVPNConfig(const QString &hostname);
     QStringList safeResolve(const QString &hostname);
+    void uninstall();
 
     const QSettings &getBrandingSettings() const;
     const QSettings &getAppSettings() const;
@@ -87,6 +88,7 @@ public slots:
     void openSettingsWindow();
     void vpnConnected();
     void vpnDisconnected();
+    void confirmUninstall();
 
     void settingsChanged(const QSet<QString> &keys);
 

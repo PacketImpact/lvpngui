@@ -102,6 +102,10 @@ VPNGUI::VPNGUI(QObject *parent)
     , m_settingsWindow(NULL)
     , m_lockFile(m_installer.getDir().filePath("lvpngui.lock"))
 {
+    if (!m_installer.getDir().exists()) {
+        m_installer.getDir().mkpath(".");
+    }
+
     if(!m_lockFile.tryLock(100)) {
         throw InitializationError(getName(), tr("%1 is already running.").arg(getName()));
     }
@@ -154,6 +158,14 @@ VPNGUI::VPNGUI(QObject *parent)
 
 VPNGUI::~VPNGUI() {
     m_trayIcon.setVisible(false);
+    m_openvpn.disconnect();
+
+    if (m_settingsWindow) {
+        delete m_settingsWindow;
+    }
+    if (m_logWindow) {
+        delete m_logWindow;
+    }
 }
 
 QString VPNGUI::getName() const {
@@ -391,6 +403,26 @@ QString VPNGUI::makeOpenVPNConfig(const QString &hostname) {
     return path;
 }
 
+void VPNGUI::confirmUninstall() {
+    QString msg(tr("Are you sure you want to uninstall %1 and delete the configuration?").arg(getName()));
+    QMessageBox::StandardButton confirm;
+    confirm = QMessageBox::information(NULL, tr("Uninstall"), msg,
+                                       QMessageBox::Yes | QMessageBox::No);
+    if (confirm == QMessageBox::Yes) {
+        uninstall();
+    }
+}
+
+void VPNGUI::uninstall() {
+    m_openvpn.disconnect();
+
+    m_appSettings.clear();
+    m_installer.uninstall();
+
+    QMessageBox::information(NULL, tr("Uninstall"),
+                             tr("%1 has been uninstalled.").arg(getName()));
+    QApplication::instance()->quit();
+}
 
 bool gatewaysSort(const VPNGateway &gw1, const VPNGateway &gw2) {
     return gw1.display_name < gw2.display_name;

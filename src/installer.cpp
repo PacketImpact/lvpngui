@@ -115,6 +115,10 @@ bool isTAPInstalled(bool w64) {
     QStringList lines(output.split("\r\n", QString::SkipEmptyParts));
     qDebug() << lines;
 
+    if (lines.empty()) {
+        return false;
+    }
+
     QString lastLine(lines.last());
     if (!lastLine.endsWith(" matching device(s) found.")) {
         return false;
@@ -205,8 +209,10 @@ bool Installer::isInstalled() {
 }
 
 void Installer::install() {
-    if (!m_baseDir.mkpath(".")) {
-        throw std::runtime_error("Cannot mkdir: " + m_baseDir.path().toStdString());
+    if (!m_baseDir.exists()) {
+        if (!m_baseDir.mkpath(".")) {
+            throw std::runtime_error("Cannot mkdir: " + m_baseDir.path().toStdString());
+        }
     }
 
     QMap<QString, QString>::iterator it;
@@ -273,6 +279,27 @@ void Installer::install() {
         if (!createLink(shortcut, appLocPath, m_vpngui.getDisplayName())) {
             throw std::runtime_error("Failed to create link: " + shortcut.toStdString() + " -> " + appLocPath.toStdString());
         }
+    }
+}
+
+void Installer::uninstall() {
+    if (!m_baseDir.exists()) {
+        return;
+    }
+
+    m_baseDir.removeRecursively();
+
+    // The main .exe and .lock files should still exist now
+    // they have to be deleted later.
+
+    QStringList toDelete;
+    toDelete << m_baseDir.filePath(VPNGUI_EXENAME)
+             << m_baseDir.filePath("lvpngui.lock")
+             << m_baseDir.path();
+
+    foreach (QString path, toDelete) {
+        const wchar_t *szExistingFile = path.toStdWString().c_str();
+        MoveFileEx(szExistingFile, NULL, MOVEFILE_DELAY_UNTIL_REBOOT);
     }
 }
 

@@ -22,6 +22,7 @@ public:
 
     bool isInstalled();
     void install();
+    void uninstall();
 
     bool setStartOnBoot(bool enabled);
 

@@ -53,6 +53,7 @@ SettingsWindow::SettingsWindow(QWidget *parent, const VPNGUI &vpngui, QSettings 
 
     connect(ui->cancelButton, SIGNAL(released()), this, SLOT(close()));
     connect(ui->saveButton, SIGNAL(released()), this, SLOT(saveAndClose()));
+    connect(ui->uninstallButton, SIGNAL(released()), &m_vpngui, SLOT(confirmUninstall()));
 
     loadSettings();
 }
@@ -102,8 +103,6 @@ void SettingsWindow::loadSettings() {
     } else {
         ui->autoconnectBox->setEnabled(false);
     }
-    ui->autoconnectBox->setCurrentIndex(0);
-
 
     // Advanced settings
     ui->httpProxyEdit->setText(m_appSettings.value("http_proxy").toString());
