@@ -96,11 +96,15 @@ bool OpenVPN::connect(const QString &configPath) {
 void OpenVPN::disconnect() {
     m_abort = true;
 
-    logStatus(tr("Disconnecting..."));
-    mgmtSend("signal SIGTERM");
-    m_openvpnProc.terminate();
-    m_openvpnProc.waitForFinished(1000);
-    m_openvpnProc.kill();
+    if (m_openvpnProc.state() != QProcess::NotRunning) {
+        logStatus(tr("Disconnecting..."));
+        if (m_mgmtSocket.isOpen()) {
+            mgmtSend("signal SIGTERM");
+        }
+        m_openvpnProc.terminate();
+        m_openvpnProc.waitForFinished(1000);
+        m_openvpnProc.kill();
+    }
 }
 
 void OpenVPN::logStatus(const QString &line) {

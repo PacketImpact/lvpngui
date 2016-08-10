@@ -282,20 +282,45 @@ void Installer::install() {
     }
 }
 
-void Installer::uninstall() {
+void Installer::uninstall(bool waitForOpenVPN) {
+    QString appExePath = m_baseDir.filePath(VPNGUI_EXENAME);
+
     if (!m_baseDir.exists()) {
         return;
     }
 
+    if (waitForOpenVPN) {
+        // Try to delete openvpn.exe for up to a second
+        // Even if it's killed before, the file is somehow still opened
+        // at this point.
+        for (int i=0; i<10; i++) {
+            QFile f(m_baseDir.filePath("openvpn.exe"));
+            if (!f.exists() || f.remove()) {
+                break;
+            }
+            Sleep(100);
+        }
+    }
+
     m_baseDir.removeRecursively();
+
+    // Now the desktop shortcut
+    QDir homeDir(QString(qgetenv("USERPROFILE")));
+    QDir desktopDir(homeDir.filePath("Desktop"));
+    QString shortcutPath(desktopDir.filePath(m_vpngui.getDisplayName() + ".lnk"));
+    QFile shortcut(shortcutPath);
+    if (shortcut.symLinkTarget() == appExePath) {
+        shortcut.remove();
+    }
 
     // The main .exe and .lock files should still exist now
     // they have to be deleted later.
 
     QStringList toDelete;
-    toDelete << m_baseDir.filePath(VPNGUI_EXENAME)
+    toDelete << appExePath
              << m_baseDir.filePath("lvpngui.lock")
-             << m_baseDir.path();
+             << m_baseDir.path()
+             << m_baseDir.dirName();
 
     foreach (QString path, toDelete) {
         const wchar_t *szExistingFile = path.toStdWString().c_str();

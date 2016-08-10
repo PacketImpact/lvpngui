@@ -22,7 +22,7 @@ public:
 
     bool isInstalled();
     void install();
-    void uninstall();
+    void uninstall(bool waitForOpenVPN=true);
 
     bool setStartOnBoot(bool enabled);
 
