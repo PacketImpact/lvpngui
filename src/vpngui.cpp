@@ -92,7 +92,7 @@ VPNGUI::VPNGUI(QObject *parent)
     , m_trayMenu()
     , m_trayIcon(this)
     , m_gatewaysReply(NULL)
-    , m_providerSettings(":/branding.ini", QSettings::IniFormat)
+    , m_providerSettings(":/provider.ini", QSettings::IniFormat)
     , m_appSettings(VPNGUI_ORGNAME, getName())
     , m_qnam(this)
     , m_installer(*this)
@@ -191,6 +191,7 @@ void VPNGUI::openSettingsWindow() {
     }
 
     m_settingsWindow = new SettingsWindow(NULL, *this, m_appSettings);
+    connect(m_settingsWindow, SIGNAL(settingsChanged(QSet<QString>)), this, SLOT(settingsChanged(QSet<QString>)));
     m_settingsWindow->show();
 }
 
@@ -213,7 +214,7 @@ void VPNGUI::queryGateways() {
     connect(m_gatewaysReply, &QNetworkReply::finished, this, &VPNGUI::gatewaysQueryFinished);
 }
 
-void VPNGUI::updateGatewaysList() {
+void VPNGUI::updateGatewayList() {
     VPNGateway gw;
 
     if (m_connectMapper) {
@@ -280,8 +281,6 @@ bool VPNGUI::readSavedCredentials(VPNCreds &c) {
     if (sep == -1) {
         return false;
     }
-
-    qDebug() << decrypted;
 
     c.username = decrypted.left(sep);
     c.password = decrypted.mid(sep + 1);
@@ -398,6 +397,7 @@ void VPNGUI::gatewaysQueryFinished() {
 
     if (m_gatewaysReply->error()) {
         m_trayIcon.showMessage(tr("Gateways update error"), m_gatewaysReply->errorString());
+        onGUIReady();
         return;
     }
 
@@ -416,7 +416,16 @@ void VPNGUI::gatewaysQueryFinished() {
     }
 
     qSort(m_gateways.begin(), m_gateways.end(), &gatewaysSort);
-    updateGatewaysList();
+    updateGatewayList();
+    onGUIReady();
+}
+
+// Called after queryGateways() has finished/failed
+void VPNGUI::onGUIReady() {
+    QString autoconnect(m_appSettings.value("autoconnect").toString());
+    if (!autoconnect.isEmpty()) {
+        vpnConnect(autoconnect);
+    }
 }
 
 const QSettings &VPNGUI::getBrandingSettings() const {
@@ -425,6 +434,23 @@ const QSettings &VPNGUI::getBrandingSettings() const {
 
 const QSettings &VPNGUI::getAppSettings() const {
     return m_appSettings;
+}
+
+const QList<VPNGateway> &VPNGUI::getGatewayList() const {
+    return m_gateways;
+}
+
+// Events that get triggered on settings save
+void VPNGUI::settingsChanged(const QSet<QString> &keys) {
+    if (keys.contains("start_on_boot")) {
+        bool enabled = m_appSettings.value("start_on_boot").toBool();
+        if (!m_installer.setStartOnBoot(enabled)) {
+            if (enabled) {
+                // If we can't enable it, set it back to false.
+                m_appSettings.setValue("start_on_boot", false);
+            }
+        }
+    }
 }
 
 QString getCurrentProtocol(const QSettings &providerSettings, QSettings &appSettings) {

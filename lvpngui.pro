@@ -13,7 +13,7 @@ TEMPLATE = app
 
 
 SOURCES += \
-	src/main.cpp \
+    src/main.cpp \
     src/vpngui.cpp \
     src/installer.cpp \
     src/openvpn.cpp \
@@ -45,7 +45,8 @@ TRANSLATIONS += translations/lvpngui_fr.ts
 QMAKE_CXXFLAGS += -static-libgcc -static-libstdc++
 
 DISTFILES += \
-    lvpngui.manifest
+    lvpngui.manifest \
+    schtasks_template.xml
 
 
 # Crypto++

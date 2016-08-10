@@ -11,12 +11,18 @@
 #include <QCoreApplication>
 #include <QMessageBox>
 
+#define _WIN32_DCOM
+
 #include "windows.h"
 #include "winnls.h"
 #include "shobjidl.h"
 #include "objbase.h"
 #include "objidl.h"
 #include "shlguid.h"
+#include <comdef.h>
+#include <wincred.h>
+#include <taskschd.h>
+
 
 bool createLink(QString linkPath, QString destPath, QString desc) {
     HRESULT hres;
@@ -290,4 +296,69 @@ void Installer::loadIndex() {
         m_index.insert(parts[1], parts[0]);
     }
     index.close();
+}
+
+bool Installer::setStartOnBoot(bool enabled) {
+    QString program("schtasks");
+    QString taskName(m_vpngui.getName() + "StartTask");
+    QString taskRun = m_baseDir.filePath(VPNGUI_EXENAME);
+
+    QFile tpl(":/schtasks_template.xml");
+    if (!tpl.open(QFile::ReadOnly | QFile::Text)) {
+        throw std::runtime_error("Cannot read schtasks_template.xml");
+    }
+
+    QString xml(QString::fromUtf8(tpl.readAll()));
+    xml.replace("%FULLUSERNAME%", qgetenv("USERDOMAIN") + "\\" + qgetenv("USERNAME"));
+    xml.replace("%EXEPATH%", taskRun);
+    xml.replace("%TASKNAME%", taskName);
+
+    QString xmlPath(m_baseDir.filePath("schtasks.xml"));
+    QFile xmlFile(xmlPath);
+    if (!xmlFile.open(QFile::WriteOnly | QFile::Text)) {
+        throw std::runtime_error("Cannot write schtasks.xml");
+    }
+    xmlFile.write(xml.toUtf8());
+    xmlFile.close();
+
+
+    QProcess p;
+    p.setProcessChannelMode(QProcess::MergedChannels);
+    QStringList createArgs, deleteArgs;
+
+    /*
+    createArgs << "/Create"
+               << "/RU" << qgetenv("USERNAME")
+               << "/SC" << "ONLOGON"
+               << "/TN" << taskName
+               << "/TR" << taskRun
+               << "/RL" << "HIGHEST"
+               << "/IT";
+    */
+
+    createArgs << "/Create" << "/XML" << xmlPath
+               << "/RU" << qgetenv("USERNAME")
+               << "/TN" << taskName
+               << "/IT";
+
+    deleteArgs << "/Delete"
+               << "/TN" << taskName << "/F";
+
+    p.start(program, deleteArgs);
+    p.waitForFinished(1000);
+    p.kill();
+
+    if (enabled) {
+        p.start(program, createArgs);
+        p.waitForFinished(3000);
+        p.kill();
+
+        if (p.exitCode() != 0) {
+            QMessageBox::critical(NULL,
+                                  "schtask error: " + QString::number(p.exitCode()),
+                                  QString::fromLocal8Bit(p.readAll()));
+            return false;
+        }
+    }
+    return true;
 }

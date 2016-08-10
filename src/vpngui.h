@@ -48,11 +48,13 @@ public:
     VPNCreds handleAuth(bool failed=false);
 
     void queryGateways();
-    void updateGatewaysList();
+    void updateGatewayList();
     QString makeOpenVPNConfig(const QString &hostname);
     QStringList safeResolve(const QString &hostname);
+
     const QSettings &getBrandingSettings() const;
     const QSettings &getAppSettings() const;
+    const QList<VPNGateway> &getGatewayList() const;
 
     QString getName() const;
     QString getDisplayName() const;
@@ -70,10 +72,13 @@ public slots:
     void vpnConnected();
     void vpnDisconnected();
 
+    void settingsChanged(const QSet<QString> &keys);
+
 private:
     bool readSavedCredentials(VPNCreds &c);
     void saveCredentials(const VPNCreds &c);
     bool promptCredentials(VPNCreds &c);
+    void onGUIReady();
 
     QMenu *m_connectMenu;
     QAction *m_disconnectAction;

@@ -1,8 +1,9 @@
 <RCC>
     <qresource prefix="/">
         <file alias="icon.png">provider/icon.png</file>
-        <file alias="branding.ini">provider/provider.ini</file>
+        <file alias="provider.ini">provider/provider.ini</file>
         <file>translations/lvpngui_fr.qm</file>
+        <file>schtasks_template.xml</file>
     </qresource>
     <qresource prefix="/bin32">
         <file alias="libeay32.dll">openvpn-32/libeay32.dll</file>

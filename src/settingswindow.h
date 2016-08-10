@@ -21,6 +21,9 @@ public:
     void loadSettings();
     void saveSettings();
 
+signals:
+    void settingsChanged(const QSet<QString> &keys);
+
 public slots:
     void saveAndClose();
 

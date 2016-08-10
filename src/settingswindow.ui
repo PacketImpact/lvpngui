@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>387</width>
-    <height>250</height>
+    <height>299</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -86,6 +86,27 @@ The slowest, but less likely to be filtered. Please try UDP first.</string>
          </property>
          <property name="checkable">
           <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="0" colspan="2">
+        <widget class="QCheckBox" name="startOnBootCheckbox">
+         <property name="text">
+          <string>Start on boot</string>
+         </property>
+        </widget>
+       </item>
+       <item row="4" column="1">
+        <widget class="QComboBox" name="autoconnectBox">
+         <property name="editable">
+          <bool>false</bool>
+         </property>
+        </widget>
+       </item>
+       <item row="4" column="0">
+        <widget class="QLabel" name="label">
+         <property name="text">
+          <string>Connect on start:</string>
          </property>
         </widget>
        </item>

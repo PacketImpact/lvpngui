@@ -23,6 +23,8 @@ public:
     bool isInstalled();
     void install();
 
+    bool setStartOnBoot(bool enabled);
+
     inline QDir getDir() const { return m_baseDir; }
 
 private:
