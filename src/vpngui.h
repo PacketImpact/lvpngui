@@ -1,6 +1,7 @@
 #ifndef VPNGUI_H
 #define VPNGUI_H
 
+#include <exception>
 #include <QObject>
 #include <QSystemTrayIcon>
 #include <QMenu>
@@ -10,6 +11,7 @@
 #include <QList>
 #include <QString>
 #include <QSignalMapper>
+#include <QLockFile>
 
 #include "installer.h"
 #include "openvpn.h"
@@ -28,6 +30,20 @@ struct VPNCreds {
 struct VPNGateway {
     QString display_name;
     QString hostname;
+};
+
+struct InitializationError : public std::exception {
+    InitializationError(const QString &title_, const QString &text_)
+        : title(title_), text(text_)
+    {}
+    virtual ~InitializationError() throw() {}
+
+    const char *what() const throw() {
+        return "Initialization error";
+    }
+
+    QString title;
+    QString text;
 };
 
 // Helper to get the selected protocol, check provider settings, and
@@ -101,6 +117,7 @@ private:
     SettingsWindow *m_settingsWindow;
 
     QDir m_configDir;
+    QLockFile m_lockFile;
 };
 
 #endif // VPNGUI_H

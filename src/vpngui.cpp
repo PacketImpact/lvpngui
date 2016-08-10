@@ -14,6 +14,7 @@
 #include <QDnsLookup>
 #include <QEventLoop>
 #include <QHostAddress>
+#include <QMessageBox>
 
 QStringList _safeResolve(QString hostname, QString nameserver) {
     QDnsLookup dns;
@@ -99,7 +100,12 @@ VPNGUI::VPNGUI(QObject *parent)
     , m_openvpn(this, m_installer.getDir().filePath("openvpn.exe"))
     , m_logWindow(NULL)
     , m_settingsWindow(NULL)
+    , m_lockFile(m_installer.getDir().filePath("lvpngui.lock"))
 {
+    if(!m_lockFile.tryLock(100)) {
+        throw InitializationError(getName(), tr("%1 is already running.").arg(getName()));
+    }
+
     m_connectMenu = m_trayMenu.addMenu(tr("Connect"));
     m_disconnectAction = m_trayMenu.addAction(tr("Disconnect"));
     QAction *logAction = m_trayMenu.addAction(tr("View Log"));

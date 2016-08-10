@@ -16,10 +16,14 @@ int main(int argc, char *argv[])
         a.installTranslator(&translator);
     }
 
-
     try {
         VPNGUI w;
         return a.exec();
+    }
+    catch(InitializationError &e) {
+        qDebug() << "InitializationError: \n" << e.title << "\n" << e.text;
+        QMessageBox::warning(NULL, e.title, e.text);
+        return 1;
     }
     catch(std::exception &e) {
         qDebug() << "Exception: \n" << e.what();
