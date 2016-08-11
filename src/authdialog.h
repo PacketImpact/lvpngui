@@ -19,6 +19,7 @@ public:
 
     QString getUsername() const;
     QString getPassword() const;
+    bool getRemember() const;
 
 private:
     Ui::AuthDialog *ui;

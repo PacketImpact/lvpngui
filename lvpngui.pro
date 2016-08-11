@@ -58,7 +58,11 @@ LIBS += -lcryptopp
 win32 {
     RC_FILE = lvpngui.rc
     LIBS += -lole32 -lshell32 -luuid
+
     WIN_PWD = $$replace(PWD, /, \\)
     OUT_PWD_WIN = $$replace(OUT_PWD, /, \\)
-    #QMAKE_POST_LINK = "$$quote(C:/Program Files/Microsoft SDKs/Windows/v6.0A/bin/mt.exe) -manifest $$quote($$WIN_PWD\\$$basename(TARGET).manifest) -outputresource:$$quote($$OUT_PWD_WIN\\${DESTDIR_TARGET};1)"
+
+    !debug {
+        QMAKE_POST_LINK = "$$quote(C:/Program Files/Microsoft SDKs/Windows/v6.0A/bin/mt.exe) -manifest $$quote($$WIN_PWD\\$$basename(TARGET).manifest) -outputresource:$$quote($$OUT_PWD_WIN\\${DESTDIR_TARGET};1)"
+    }
 }

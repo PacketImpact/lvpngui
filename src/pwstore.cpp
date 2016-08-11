@@ -10,6 +10,10 @@
 #include <cryptopp/aes.h>
 #include <cryptopp/authenc.h>
 
+#ifdef WIN32
+#include <windows.h>
+#include <intrin.h>
+
 #define IV_SIZE 16
 #define KEY_SIZE 16
 
@@ -76,11 +80,6 @@ void secureStringClear(QString &s) {
     }
     s.clear();
 }
-
-
-#ifdef WIN32
-#include <windows.h>
-#include <intrin.h>
 
 QByteArray getMacs() {
     foreach(QNetworkInterface netInterface, QNetworkInterface::allInterfaces()) {

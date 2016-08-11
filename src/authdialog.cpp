@@ -21,3 +21,7 @@ QString AuthDialog::getUsername() const {
 QString AuthDialog::getPassword() const {
     return ui->passwordInput->text();
 }
+
+bool AuthDialog::getRemember() const {
+    return ui->rememberCheckbox->isChecked();
+}

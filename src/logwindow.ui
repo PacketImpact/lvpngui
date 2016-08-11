@@ -70,6 +70,9 @@ QTextEdit .status {
 	color: #ffffff;
 }</string>
      </property>
+     <property name="verticalScrollBarPolicy">
+      <enum>Qt::ScrollBarAlwaysOn</enum>
+     </property>
      <property name="readOnly">
       <bool>true</bool>
      </property>

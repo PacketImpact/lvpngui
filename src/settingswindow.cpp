@@ -54,6 +54,7 @@ SettingsWindow::SettingsWindow(QWidget *parent, const VPNGUI &vpngui, QSettings 
     connect(ui->cancelButton, SIGNAL(released()), this, SLOT(close()));
     connect(ui->saveButton, SIGNAL(released()), this, SLOT(saveAndClose()));
     connect(ui->uninstallButton, SIGNAL(released()), &m_vpngui, SLOT(confirmUninstall()));
+    connect(ui->forgetPwButton, SIGNAL(released()), this, SLOT(forgetPw()));
 
     loadSettings();
 }
@@ -148,4 +149,8 @@ void SettingsWindow::saveSettings() {
 
     QSet<QString> diff(settingsDiff(previousSettings, m_appSettings));
     emit settingsChanged(diff);
+}
+
+void SettingsWindow::forgetPw() {
+    m_appSettings.remove("auth");
 }

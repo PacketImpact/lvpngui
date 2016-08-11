@@ -259,8 +259,13 @@ VPNCreds VPNGUI::handleAuth(bool failed) {
         }
     }
 
-    if (promptCredentials(c)) {
-        saveCredentials(c);
+    AuthDialog d(NULL, *this);
+    if (d.exec() != QDialog::Rejected) {
+        c.username = d.getUsername();
+        c.password = d.getPassword();
+        if (d.getRemember()) {
+            saveCredentials(c);
+        }
         return c;
     }
 
@@ -268,16 +273,6 @@ VPNCreds VPNGUI::handleAuth(bool failed) {
     m_openvpn.disconnect();
     c.clear();
     return c;
-}
-
-bool VPNGUI::promptCredentials(VPNCreds &c) {
-    AuthDialog d(NULL, *this);
-    if (d.exec() == QDialog::Rejected) {
-        return false;
-    }
-    c.username = d.getUsername();
-    c.password = d.getPassword();
-    return true;
 }
 
 bool VPNGUI::readSavedCredentials(VPNCreds &c) {
@@ -327,6 +322,10 @@ void VPNGUI::vpnDisconnect() {
 }
 
 void VPNGUI::vpnStatusUpdated(OpenVPN::Status s) {
+    if (m_logWindow && m_logWindow->isVisible()) {
+        return;
+    }
+
     if (s == OpenVPN::Connected) {
         m_trayIcon.showMessage(tr("Connected"), tr("VPN successfully connected."));
     } else if (s == OpenVPN::Connecting) {

@@ -95,7 +95,6 @@ public slots:
 private:
     bool readSavedCredentials(VPNCreds &c);
     void saveCredentials(const VPNCreds &c);
-    bool promptCredentials(VPNCreds &c);
     void onGUIReady();
 
     QMenu *m_connectMenu;

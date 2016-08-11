@@ -26,6 +26,7 @@ signals:
 
 public slots:
     void saveAndClose();
+    void forgetPw();
 
 private:
     Ui::SettingsWindow *ui;

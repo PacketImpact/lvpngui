@@ -18,11 +18,6 @@ int pickPort() {
     return p;
 }
 
-QString randomPassword() {
-    QByteArray ba(8, '\0');
-    CryptoPP::OS_GenerateRandomBlock(false, (byte*)ba.data(), 8);
-    return ba.toHex();
-}
 
 OpenVPN::OpenVPN(VPNGUI *parent, QString openvpnPath)
     : QObject(parent)
@@ -32,7 +27,7 @@ OpenVPN::OpenVPN(VPNGUI *parent, QString openvpnPath)
     , m_status(Disconnected)
     , m_authFailed(false)
     , m_mgmtHost("127.0.0.1")
-    , m_mgmtPort(pickPort())
+    , m_mgmtPort(0)
 {
     if (parent == NULL) {
         qDebug() << "OpenVPN(): *parent is required";
@@ -62,6 +57,7 @@ bool OpenVPN::connect(const QString &configPath) {
     m_openvpnLog.clear();
     m_mgmtSocket.close();
 
+    m_mgmtPort = pickPort();
     QString portStr(QString::number(m_mgmtPort));
 
     m_authFailed = false;
