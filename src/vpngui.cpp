@@ -126,8 +126,7 @@ VPNGUI::VPNGUI(QObject *parent)
     connect(settingsAction, SIGNAL(triggered(bool)), this, SLOT(openSettingsWindow()));
     connect(m_disconnectAction, SIGNAL(triggered(bool)), this, SLOT(vpnDisconnect()));
 
-    connect(&m_openvpn, SIGNAL(connected()), this, SLOT(vpnConnected()));
-    connect(&m_openvpn, SIGNAL(disconnected()), this, SLOT(vpnDisconnected()));
+    connect(&m_openvpn, SIGNAL(statusUpdated(OpenVPN::Status)), this, SLOT(vpnStatusUpdated(OpenVPN::Status)));
 
     if (!m_installer.isInstalled()) {
         m_installer.install();
@@ -197,7 +196,6 @@ void VPNGUI::openLogWindow() {
     }
 
     m_logWindow = new LogWindow(NULL, *this, m_openvpn);
-    connect(&m_openvpn, SIGNAL(logUpdated(QString)), m_logWindow, SLOT(newLogLine(QString)));
     m_logWindow->show();
 }
 
@@ -318,6 +316,9 @@ void VPNGUI::vpnConnect(QString hostname) {
     qDebug() << "Connecting to " << hostname;
     m_connectMenu->setDisabled(true);
     m_disconnectAction->setDisabled(false);
+
+    openLogWindow();
+
     m_openvpn.connect(makeOpenVPNConfig(hostname));
 }
 
@@ -325,16 +326,19 @@ void VPNGUI::vpnDisconnect() {
     m_openvpn.disconnect();
 }
 
-void VPNGUI::vpnConnected() {
-    m_trayIcon.showMessage(tr("Connected"), tr("VPN successfully connected."));
+void VPNGUI::vpnStatusUpdated(OpenVPN::Status s) {
+    if (s == OpenVPN::Connected) {
+        m_trayIcon.showMessage(tr("Connected"), tr("VPN successfully connected."));
+    } else if (s == OpenVPN::Connecting) {
+        m_trayIcon.showMessage(tr("Connecting"), tr("VPN connecting..."));
+    } else if (s == OpenVPN::Disconnecting) {
+        m_trayIcon.showMessage(tr("Disconnecting"), tr("VPN disconnecting..."));
+    } else if (s == OpenVPN::Disconnected) {
+        m_connectMenu->setDisabled(false);
+        m_disconnectAction->setDisabled(true);
+        m_trayIcon.showMessage(tr("Disconnected"), tr("VPN disconnected."));
+    }
 }
-
-void VPNGUI::vpnDisconnected() {
-    m_connectMenu->setDisabled(false);
-    m_disconnectAction->setDisabled(true);
-    m_trayIcon.showMessage(tr("Disconnected"), tr("VPN disconnected."));
-}
-
 
 QString VPNGUI::makeOpenVPNConfig(const QString &hostname) {
     QString name(QUuid::createUuid().toString() + ".ovpn");

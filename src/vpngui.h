@@ -83,11 +83,11 @@ signals:
 public slots:
     void vpnConnect(QString hostname);
     void vpnDisconnect();
+    void vpnStatusUpdated(OpenVPN::Status s);
+
     void gatewaysQueryFinished();
     void openLogWindow();
     void openSettingsWindow();
-    void vpnConnected();
-    void vpnDisconnected();
     void confirmUninstall();
 
     void settingsChanged(const QSet<QString> &keys);

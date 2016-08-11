@@ -3,6 +3,8 @@
 
 #include <QWidget>
 
+#include "openvpn.h"
+
 namespace Ui {
 class LogWindow;
 }
@@ -20,6 +22,7 @@ public:
 
 public slots:
     void newLogLine(const QString &line);
+    void statusUpdated(OpenVPN::Status s);
     void copyLog();
 
 private:

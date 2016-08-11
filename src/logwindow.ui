@@ -14,25 +14,11 @@
    <string>Log</string>
   </property>
   <property name="windowIcon">
-   <iconset resource="res.qrc">
+   <iconset resource="../res.qrc">
     <normaloff>:/icon.png</normaloff>:/icon.png</iconset>
   </property>
   <layout class="QGridLayout" name="gridLayout">
-   <item row="1" column="2">
-    <widget class="QPushButton" name="closeButton">
-     <property name="text">
-      <string>Close</string>
-     </property>
-    </widget>
-   </item>
    <item row="1" column="1">
-    <widget class="QPushButton" name="copyButton">
-     <property name="text">
-      <string>Copy</string>
-     </property>
-    </widget>
-   </item>
-   <item row="1" column="0">
     <spacer name="horizontalSpacer">
      <property name="orientation">
       <enum>Qt::Horizontal</enum>
@@ -45,7 +31,28 @@
      </property>
     </spacer>
    </item>
-   <item row="0" column="0" colspan="3">
+   <item row="1" column="2">
+    <widget class="QPushButton" name="copyButton">
+     <property name="text">
+      <string>Copy</string>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="3">
+    <widget class="QPushButton" name="closeButton">
+     <property name="text">
+      <string>Close</string>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="0">
+    <widget class="QLabel" name="statusLabel">
+     <property name="text">
+      <string/>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="0" colspan="4">
     <widget class="QTextEdit" name="log">
      <property name="font">
       <font>
@@ -71,7 +78,7 @@ QTextEdit .status {
   </layout>
  </widget>
  <resources>
-  <include location="res.qrc"/>
+  <include location="../res.qrc"/>
  </resources>
  <connections/>
 </ui>

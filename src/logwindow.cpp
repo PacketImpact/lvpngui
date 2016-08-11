@@ -17,9 +17,14 @@ LogWindow::LogWindow(QWidget *parent, const VPNGUI &vpngui, const OpenVPN &openv
     connect(ui->closeButton, SIGNAL(clicked(bool)), this, SLOT(close()));
     connect(ui->copyButton, SIGNAL(clicked(bool)), this, SLOT(copyLog()));
 
+    connect(&openvpn, SIGNAL(logUpdated(QString)), this, SLOT(newLogLine(QString)));
+    connect(&openvpn, SIGNAL(statusUpdated(OpenVPN::Status)), this, SLOT(statusUpdated(OpenVPN::Status)));
+
     foreach (QString line, m_openvpn.getLog()) {
         appendLine(line);
     }
+
+    statusUpdated(openvpn.getStatus());
 }
 
 LogWindow::~LogWindow()
@@ -42,6 +47,10 @@ void LogWindow::appendLine(const QString &line) {
 
 void LogWindow::newLogLine(const QString &line) {
     appendLine(line);
+}
+
+void LogWindow::statusUpdated(OpenVPN::Status s) {
+    ui->statusLabel->setText(getStatusString(s));
 }
 
 void LogWindow::copyLog() {

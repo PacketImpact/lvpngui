@@ -8,6 +8,7 @@
 #include <cryptopp/osrng.h>
 #include <QTcpServer>
 #include <QCoreApplication>
+#include <QApplication>
 
 int pickPort() {
     QTcpServer s;
@@ -28,9 +29,8 @@ OpenVPN::OpenVPN(VPNGUI *parent, QString openvpnPath)
     , m_vpngui(parent)
     , m_openvpnPath(openvpnPath)
     , m_openvpnProc(this)
+    , m_status(Disconnected)
     , m_authFailed(false)
-    , m_abort(false)
-    , m_connected(false)
     , m_mgmtHost("127.0.0.1")
     , m_mgmtPort(pickPort())
 {
@@ -64,7 +64,9 @@ bool OpenVPN::connect(const QString &configPath) {
 
     QString portStr(QString::number(m_mgmtPort));
 
-    logStatus(tr("Connecting..."));
+    m_authFailed = false;
+    setStatus(Connecting);
+
     logStatus(m_openvpnPath);
     logStatus("Management: " + m_mgmtHost + ":" + portStr);
     logStatus("Config: " + configPath);
@@ -82,10 +84,6 @@ bool OpenVPN::connect(const QString &configPath) {
     args.append("--auth-retry");
     args.append("interact");
 
-    m_authFailed = false;
-    m_connected = false;
-    m_abort = false;
-
     m_openvpnProc.start(m_openvpnPath, args);
 
     m_mgmtSocketTimer.start();
@@ -94,10 +92,9 @@ bool OpenVPN::connect(const QString &configPath) {
 }
 
 void OpenVPN::disconnect() {
-    m_abort = true;
+    setStatus(Disconnecting);
 
     if (m_openvpnProc.state() != QProcess::NotRunning) {
-        logStatus(tr("Disconnecting..."));
         if (m_mgmtSocket.isOpen()) {
             mgmtSend("signal SIGTERM");
         }
@@ -113,8 +110,18 @@ void OpenVPN::logStatus(const QString &line) {
     emit logUpdated("# " + line);
 }
 
-bool OpenVPN::isUp() {
-    return false;
+bool OpenVPN::isUp() const {
+    return getStatus() == Connected;
+}
+
+OpenVPN::Status OpenVPN::getStatus() const {
+    return m_status;
+}
+
+void OpenVPN::setStatus(Status s) {
+    m_status = s;
+    emit statusUpdated(s);
+    logStatus(tr("Status:") + " " + getStatusString(s));
 }
 
 void OpenVPN::procReadyRead() {
@@ -131,8 +138,7 @@ void OpenVPN::procReadyRead() {
         emit logUpdated(line);
 
         if (line.contains("Initialization Sequence Completed")) {
-            m_connected = true;
-            emit connected();
+            setStatus(Connected);
         }
     }
 }
@@ -144,7 +150,7 @@ void OpenVPN::procError(QProcess::ProcessError) {
 void OpenVPN::procFinished(int exitCode, QProcess::ExitStatus) {
     logStatus(tr("Finished:") + " code=" + QString::number(exitCode));
 
-    emit disconnected();
+    setStatus(Disconnected);
 }
 
 const QStringList &OpenVPN::getLog() const {
@@ -173,7 +179,7 @@ void OpenVPN::mgmtConnected() {
 }
 
 void OpenVPN::mgmtReadyRead() {
-    if (m_abort) {
+    if (m_status != Connected && m_status != Connecting) {
         return;
     }
     while (m_mgmtSocket.canReadLine()) {
@@ -226,8 +232,8 @@ void OpenVPN::handleManagementCommand(const QString &line) {
 
         VPNCreds c = m_vpngui->handleAuth(m_authFailed);
         while (c.username.isEmpty()) {
-            if (m_abort) {
-                // "Cancel" button calls disconnect() that sets m_abort=true.
+            if (m_status != Connected && m_status != Connecting) {
+                // "Cancel" button calls disconnect() that sets to Disconnecting
                 // openvpn will be killed and the socket too.
                 return;
             }
@@ -242,4 +248,21 @@ void OpenVPN::handleManagementCommand(const QString &line) {
     if (line.startsWith("PASSWORD:Verification Failed: ")) {
         m_authFailed = true;
     }
+}
+
+
+QString getStatusString(OpenVPN::Status s) {
+    QString statusText;
+    if (s == OpenVPN::Connected) {
+        statusText = QApplication::tr("Connected.");
+    } else if (s == OpenVPN::Connecting) {
+        statusText = QApplication::tr("Connecting...");
+    } else if (s == OpenVPN::Disconnected) {
+        statusText = QApplication::tr("Disconnected.");
+    } else if (s == OpenVPN::Disconnecting) {
+        statusText = QApplication::tr("Disconnecting...");
+    } else {
+        statusText = "";
+    }
+    return statusText;
 }

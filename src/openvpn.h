@@ -21,6 +21,13 @@ class OpenVPN : public QObject
 {
     Q_OBJECT
 public:
+    enum Status {
+        Disconnected,
+        Connecting,
+        Disconnecting,
+        Connected,
+    };
+
     explicit OpenVPN(VPNGUI *parent, QString openvpnPath);
     ~OpenVPN();
 
@@ -28,8 +35,8 @@ public:
     void disconnect();
     const QStringList &getLog() const;
 
-    // Check everything, ping a few IP addresses?
-    bool isUp();
+    bool isUp() const;
+    Status getStatus() const;
 
 private slots:
     void procReadyRead();
@@ -41,6 +48,7 @@ private slots:
     void mgmtConnected();
 
 signals:
+    void statusUpdated(OpenVPN::Status s);
     void logUpdated(QString line);
 
     void connected();
@@ -49,11 +57,12 @@ signals:
 private:
     void mgmtSend(const QString &line);
     void handleManagementCommand(const QString &line);
+    //QString queryManagement(const QString &command);
 
     void logStatus(const QString &line);
+    void setStatus(Status s);
 
     VPNGUI *m_vpngui;
-    QString queryManagement(const QString &command);
 
     QString m_openvpnPath;
     QProcess m_openvpnProc;
@@ -61,14 +70,17 @@ private:
 
     QString m_username;
     QString m_password;
+
+    Status m_status;
     bool m_authFailed;
     bool m_abort;
-    bool m_connected;
 
     QTcpSocket m_mgmtSocket;
     QString m_mgmtHost;
     int m_mgmtPort;
     QTimer m_mgmtSocketTimer;
 };
+
+QString getStatusString(OpenVPN::Status s);
 
 #endif // OPENVPN_H
