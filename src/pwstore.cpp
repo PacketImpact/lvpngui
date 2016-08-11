@@ -106,7 +106,6 @@ QByteArray getMachineGUID() {
 QByteArray getVolumeHash() {
    DWORD serialNum = 0;
 
-   // Determine if this volume uses an NTFS file system.
    GetVolumeInformation( L"c:\\", NULL, 0, &serialNum, NULL, NULL, NULL, 0 );
 
    return QByteArray((char*)&serialNum, 4);

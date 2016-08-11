@@ -322,6 +322,11 @@ void VPNGUI::vpnDisconnect() {
 }
 
 void VPNGUI::vpnStatusUpdated(OpenVPN::Status s) {
+    if (s == OpenVPN::Disconnected) {
+        m_connectMenu->setDisabled(false);
+        m_disconnectAction->setDisabled(true);
+    }
+
     if (m_logWindow && m_logWindow->isVisible()) {
         return;
     }
@@ -333,8 +338,6 @@ void VPNGUI::vpnStatusUpdated(OpenVPN::Status s) {
     } else if (s == OpenVPN::Disconnecting) {
         m_trayIcon.showMessage(tr("Disconnecting"), tr("VPN disconnecting..."));
     } else if (s == OpenVPN::Disconnected) {
-        m_connectMenu->setDisabled(false);
-        m_disconnectAction->setDisabled(true);
         m_trayIcon.showMessage(tr("Disconnected"), tr("VPN disconnected."));
     }
 }
@@ -399,6 +402,13 @@ QString VPNGUI::makeOpenVPNConfig(const QString &hostname) {
     }
     if (!dns.isEmpty()) {
         s << "dhcp-option DNS " << dns << "\n";
+    }
+
+    // Additional config
+    QString addConfig(m_appSettings.value("additional_config").toString());
+    if (!addConfig.isEmpty()) {
+        s << "# Additional config\n";
+        s << m_appSettings.value("additional_config").toString() << "\n";
     }
 
     s.flush();

@@ -109,6 +109,7 @@ void SettingsWindow::loadSettings() {
     ui->httpProxyEdit->setText(m_appSettings.value("http_proxy").toString());
     ui->dnsAPIEdit->setText(m_appSettings.value("dns_api").toString());
     ui->dnsSystemEdit->setText(m_appSettings.value("dns_system").toString());
+    ui->addConfigEdit->setText(m_appSettings.value("additional_config").toString());
 }
 
 void SettingsWindow::saveSettings() {
@@ -146,6 +147,7 @@ void SettingsWindow::saveSettings() {
     m_appSettings.setValue("http_proxy", ui->httpProxyEdit->text());
     m_appSettings.setValue("dns_api", ui->dnsAPIEdit->text());
     m_appSettings.setValue("dns_system", ui->dnsSystemEdit->text());
+    m_appSettings.setValue("additional_config", ui->addConfigEdit->toPlainText());
 
     QSet<QString> diff(settingsDiff(previousSettings, m_appSettings));
     emit settingsChanged(diff);

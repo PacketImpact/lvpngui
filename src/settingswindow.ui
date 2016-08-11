@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>387</width>
-    <height>305</height>
+    <height>352</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -26,6 +26,20 @@
       </size>
      </property>
     </spacer>
+   </item>
+   <item row="1" column="2">
+    <widget class="QPushButton" name="saveButton">
+     <property name="text">
+      <string>Ok</string>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="1">
+    <widget class="QPushButton" name="cancelButton">
+     <property name="text">
+      <string>Cancel</string>
+     </property>
+    </widget>
    </item>
    <item row="0" column="0" colspan="3">
     <widget class="QTabWidget" name="tabWidget">
@@ -159,7 +173,7 @@ The slowest, but less likely to be filtered. Please try UDP first.</string>
          </property>
         </widget>
        </item>
-       <item row="6" column="0">
+       <item row="8" column="0">
         <spacer name="verticalSpacer_2">
          <property name="orientation">
           <enum>Qt::Vertical</enum>
@@ -175,7 +189,7 @@ The slowest, but less likely to be filtered. Please try UDP first.</string>
          </property>
         </spacer>
        </item>
-       <item row="7" column="0" colspan="2">
+       <item row="9" column="0" colspan="2">
         <widget class="QWidget" name="widget" native="true">
          <layout class="QGridLayout" name="gridLayout_2">
           <property name="leftMargin">
@@ -218,6 +232,22 @@ The slowest, but less likely to be filtered. Please try UDP first.</string>
            </spacer>
           </item>
          </layout>
+        </widget>
+       </item>
+       <item row="6" column="0" colspan="2">
+        <widget class="QLabel" name="label_2">
+         <property name="text">
+          <string>Additional OpenVPN configuration:</string>
+         </property>
+        </widget>
+       </item>
+       <item row="7" column="0" colspan="2">
+        <widget class="QTextEdit" name="addConfigEdit">
+         <property name="font">
+          <font>
+           <family>Consolas</family>
+          </font>
+         </property>
         </widget>
        </item>
       </layout>
@@ -290,20 +320,6 @@ The slowest, but less likely to be filtered. Please try UDP first.</string>
        </item>
       </layout>
      </widget>
-    </widget>
-   </item>
-   <item row="1" column="1">
-    <widget class="QPushButton" name="cancelButton">
-     <property name="text">
-      <string>Cancel</string>
-     </property>
-    </widget>
-   </item>
-   <item row="1" column="2">
-    <widget class="QPushButton" name="saveButton">
-     <property name="text">
-      <string>Ok</string>
-     </property>
     </widget>
    </item>
   </layout>
