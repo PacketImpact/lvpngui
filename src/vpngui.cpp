@@ -102,6 +102,12 @@ VPNGUI::VPNGUI(QObject *parent)
     , m_settingsWindow(NULL)
     , m_lockFile(m_installer.getDir().filePath("lvpngui.lock"))
 {
+    // Update with provider.ini values
+    qApp->setApplicationDisplayName(getDisplayName());
+    qApp->setApplicationName(getName());
+    qApp->setApplicationVersion(getFullVersion());
+
+    // m_lockFile needs it before install() is called
     if (!m_installer.getDir().exists()) {
         m_installer.getDir().mkpath(".");
     }
@@ -212,22 +218,31 @@ void VPNGUI::openSettingsWindow() {
 }
 
 void VPNGUI::queryGateways() {
-    QNetworkRequest request;
-
     QString url(m_providerSettings.value("locations_url").toString());
 
     if (url.isEmpty()) {
+        /*
+         * TODO: Feature idea:
+         * load gateways from provider.ini for providers with no API
+         * [gateways] gw<N> = <a serialized map/VPNGateway>
+         */
         return;
+    } else {
+        QNetworkRequest request;
+
+        // User-Agent: Branded-name/version-bv Project-name/version
+        QString ua;
+        ua += getName() + "/" + getFullVersion();
+        ua += " (" + getURL() + ")";
+        ua += " " VPNGUI_ORGNAME "-" VPNGUI_NAME "/" VPNGUI_VERSION;
+        ua += " (" VPNGUI_URL ")";
+        request.setRawHeader("User-Agent", ua.toUtf8());
+
+        request.setUrl(url);
+
+        m_gatewaysReply = m_qnam.get(request);
+        connect(m_gatewaysReply, &QNetworkReply::finished, this, &VPNGUI::gatewaysQueryFinished);
     }
-
-    QString ua(VPNGUI_NAME "/" VPNGUI_VERSION);
-    ua += " " + getName() + "/" + getFullVersion();
-
-    request.setUrl(url);
-    request.setRawHeader("User-Agent", ua.toUtf8());
-
-    m_gatewaysReply = m_qnam.get(request);
-    connect(m_gatewaysReply, &QNetworkReply::finished, this, &VPNGUI::gatewaysQueryFinished);
 }
 
 void VPNGUI::updateGatewayList() {
@@ -340,9 +355,9 @@ void VPNGUI::vpnStatusUpdated(OpenVPN::Status s) {
     if (s == OpenVPN::Connected) {
         m_trayIcon.showMessage(tr("Connected"), tr("VPN successfully connected."));
     } else if (s == OpenVPN::Connecting) {
-        m_trayIcon.showMessage(tr("Connecting"), tr("VPN connecting..."));
+        m_trayIcon.showMessage(tr("Connecting"), tr("VPN connecting..."), QSystemTrayIcon::Information, 1000);
     } else if (s == OpenVPN::Disconnecting) {
-        m_trayIcon.showMessage(tr("Disconnecting"), tr("VPN disconnecting..."));
+        m_trayIcon.showMessage(tr("Disconnecting"), tr("VPN disconnecting..."), QSystemTrayIcon::Information, 1000);
     } else if (s == OpenVPN::Disconnected) {
         m_trayIcon.showMessage(tr("Disconnected"), tr("VPN disconnected."));
     }
@@ -369,16 +384,23 @@ QString VPNGUI::makeOpenVPNConfig(const QString &hostname) {
     s << "nobind\n";
     s << "persist-key\n";
     s << "persist-tun\n";
-    s << "comp-lzo yes\n";
     s << "auth-user-pass\n";
     s << "register-dns\n";
-    s << "redirect-gateway def1\n";
     s << "remote-random\n";
 
-    if (m_providerSettings.value("enable_ipv6", true).toBool()
+    if (m_providerSettings.value("openvpn_defgw").toBool()) {
+        s << "redirect-gateway def1\n";
+    }
+    if (m_providerSettings.value("openvpn_comp").toBool()) {
+        s << "comp-lzo yes\n";
+    }
+
+    if (m_providerSettings.value("openvpn_ipv6", true).toBool()
         && m_appSettings.value("ipv6_tunnel", true).toBool()) {
         s << "tun-ipv6\n";
-        s << "route-ipv6 2000::/3\n";
+        if (m_providerSettings.value("openvpn_defgw").toBool()) {
+            s << "route-ipv6 2000::/3\n";
+        }
     }
 
     // Ca
