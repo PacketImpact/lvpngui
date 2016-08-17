@@ -46,7 +46,9 @@ QMAKE_CXXFLAGS += -static-libgcc -static-libstdc++
 
 DISTFILES += \
     lvpngui.manifest \
-    schtasks_template.xml
+    schtasks_template.xml \
+    provider_default/provider.ini \
+    lvpngui.rc
 
 
 # Crypto++

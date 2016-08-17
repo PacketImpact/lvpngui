@@ -43,6 +43,10 @@ OpenVPN::OpenVPN(VPNGUI *parent, QString openvpnPath)
 
     QObject::connect(&m_mgmtSocketTimer, SIGNAL(timeout()), this, SLOT(mgmtTryConnect()));
     m_mgmtSocketTimer.setInterval(100);
+
+    logStatus(QString("%1 - %2 %3").arg(m_vpngui->getDisplayName(),
+                                        m_vpngui->getName(),
+                                        m_vpngui->getFullVersion()));
 }
 
 OpenVPN::~OpenVPN() {
