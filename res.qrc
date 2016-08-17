@@ -4,6 +4,7 @@
         <file alias="provider.ini">provider/provider.ini</file>
         <file>translations/lvpngui_fr.qm</file>
         <file>schtasks_template.xml</file>
+        <file alias="icon_disabled.png">provider/icon_disabled.png</file>
     </qresource>
     <qresource prefix="/bin32">
         <file alias="libeay32.dll">openvpn-32/libeay32.dll</file>

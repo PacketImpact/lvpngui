@@ -119,7 +119,7 @@ VPNGUI::VPNGUI(QObject *parent)
     m_disconnectAction->setDisabled(true);
 
     m_trayIcon.setContextMenu(&m_trayMenu);
-    m_trayIcon.setIcon(QIcon(":/icon.png"));
+    m_trayIcon.setIcon(QIcon(":/icon_disabled.png"));
 
     connect(quitAction, SIGNAL(triggered(bool)), QApplication::instance(), SLOT(quit()));
     connect(logAction, SIGNAL(triggered(bool)), this, SLOT(openLogWindow()));
@@ -325,6 +325,12 @@ void VPNGUI::vpnStatusUpdated(OpenVPN::Status s) {
     if (s == OpenVPN::Disconnected) {
         m_connectMenu->setDisabled(false);
         m_disconnectAction->setDisabled(true);
+    }
+
+    if (s == OpenVPN::Connected) {
+        m_trayIcon.setIcon(QIcon(":/icon.png"));
+    } else {
+        m_trayIcon.setIcon(QIcon(":/icon_disabled.png"));
     }
 
     if (m_logWindow && m_logWindow->isVisible()) {
