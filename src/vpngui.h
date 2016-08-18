@@ -63,6 +63,7 @@ public:
 
     VPNCreds handleAuth(bool failed=false);
 
+    void queryLatestVersion();
     void queryGateways();
     void updateGatewayList();
     QString makeOpenVPNConfig(const QString &hostname);
@@ -77,6 +78,7 @@ public:
     QString getDisplayName() const;
     QString getFullVersion() const;
     QString getURL() const;
+    QString getUserAgent() const;
 
 signals:
 
@@ -85,6 +87,7 @@ public slots:
     void vpnDisconnect();
     void vpnStatusUpdated(OpenVPN::Status s);
 
+    void latestVersionQueryFinished();
     void gatewaysQueryFinished();
     void openLogWindow();
     void openSettingsWindow();
@@ -104,6 +107,7 @@ private:
     QMenu m_trayMenu;
     QSystemTrayIcon m_trayIcon;
 
+    QNetworkReply *m_latestVersionReply;
     QNetworkReply *m_gatewaysReply;
     QList<VPNGateway> m_gateways;
 

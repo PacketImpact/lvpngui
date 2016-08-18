@@ -168,6 +168,14 @@ QString Installer::getArch() {
 }
 
 bool Installer::isInstalled() {
+    /*
+     * TODO: Check for the current version.
+     * If it's readable and:
+     * - higher, return true.
+     * - lower, return false.
+     * - same, compare .exe hashs.
+     */
+
     QMap<QString, QString>::iterator it;
     for(it=m_index.begin(); it != m_index.end(); ++it) {
         QString filename = it.key();

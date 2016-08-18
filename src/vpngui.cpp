@@ -92,6 +92,7 @@ VPNGUI::VPNGUI(QObject *parent)
     , m_connectMapper(NULL)
     , m_trayMenu()
     , m_trayIcon(this)
+    , m_latestVersionReply(NULL)
     , m_gatewaysReply(NULL)
     , m_providerSettings(":/provider.ini", QSettings::IniFormat)
     , m_appSettings(VPNGUI_ORGNAME, getName())
@@ -159,6 +160,9 @@ VPNGUI::VPNGUI(QObject *parent)
 
     // Update gateways list
     queryGateways();
+
+    // Check for newer versions
+    queryLatestVersion();
 }
 
 VPNGUI::~VPNGUI() {
@@ -192,6 +196,16 @@ QString VPNGUI::getFullVersion() const {
 
 QString VPNGUI::getURL() const {
     return m_providerSettings.value("url", VPNGUI_URL).toString();
+}
+
+QString VPNGUI::getUserAgent() const {
+    // User-Agent: Branded-name/version-bv Project-name/version
+    QString ua;
+    ua += getName() + "/" + getFullVersion();
+    ua += " (" + getURL() + ")";
+    ua += " " VPNGUI_ORGNAME "-" VPNGUI_NAME "/" VPNGUI_VERSION;
+    ua += " (" VPNGUI_URL ")";
+    return ua;
 }
 
 void VPNGUI::openLogWindow() {
@@ -229,19 +243,26 @@ void VPNGUI::queryGateways() {
         return;
     } else {
         QNetworkRequest request;
-
-        // User-Agent: Branded-name/version-bv Project-name/version
-        QString ua;
-        ua += getName() + "/" + getFullVersion();
-        ua += " (" + getURL() + ")";
-        ua += " " VPNGUI_ORGNAME "-" VPNGUI_NAME "/" VPNGUI_VERSION;
-        ua += " (" VPNGUI_URL ")";
-        request.setRawHeader("User-Agent", ua.toUtf8());
-
+        request.setRawHeader("User-Agent", getUserAgent().toUtf8());
         request.setUrl(url);
 
         m_gatewaysReply = m_qnam.get(request);
         connect(m_gatewaysReply, &QNetworkReply::finished, this, &VPNGUI::gatewaysQueryFinished);
+    }
+}
+
+void VPNGUI::queryLatestVersion() {
+    QString url(m_providerSettings.value("releases_url").toString());
+
+    if (url.isEmpty()) {
+        return;
+    } else {
+        QNetworkRequest request;
+        request.setRawHeader("User-Agent", getUserAgent().toUtf8());
+        request.setUrl(url);
+
+        m_latestVersionReply = m_qnam.get(request);
+        connect(m_latestVersionReply, &QNetworkReply::finished, this, &VPNGUI::latestVersionQueryFinished);
     }
 }
 
@@ -497,6 +518,45 @@ void VPNGUI::gatewaysQueryFinished() {
     qSort(m_gateways.begin(), m_gateways.end(), &gatewaysSort);
     updateGatewayList();
     onGUIReady();
+}
+
+void VPNGUI::latestVersionQueryFinished() {
+    if (!m_latestVersionReply) {
+        return;
+    }
+
+    if (m_latestVersionReply->error()) {
+        m_trayIcon.showMessage(tr("Error looking for new versions"), m_latestVersionReply->errorString());
+        return;
+    }
+
+    QString jsonStr = m_latestVersionReply->readAll();
+    QJsonDocument json(QJsonDocument::fromJson(jsonStr.toUtf8()));
+    QJsonObject root(json.object());
+
+    if (root.contains("latest_release")) {
+        QJsonObject latestRelease(root["latest_release"].toObject());
+        QString version(latestRelease["version"].toString());
+        QString url(latestRelease["dl_url"].toString());
+
+        if (getFullVersion() == version) {
+            return;
+        }
+        if (version.isEmpty() || url.isEmpty()) {
+            return;
+        }
+
+        QString message;
+        message += tr("A new version of %1 (%2 -> %3) has been released. You can download it here:")
+                   .arg(getDisplayName(), getFullVersion(), version);
+        message += "<br />" + QString("<a href='%1'>%1</a>").arg(url.toHtmlEscaped());
+        QMessageBox msgBox(NULL);
+        msgBox.setIcon(QMessageBox::Information);
+        msgBox.setWindowTitle(tr("New version"));
+        msgBox.setTextFormat(Qt::RichText);
+        msgBox.setText(message);
+        msgBox.exec();
+    }
 }
 
 // Called after queryGateways() has finished/failed
