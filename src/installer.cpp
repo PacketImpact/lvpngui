@@ -331,7 +331,8 @@ void Installer::uninstall(bool waitForOpenVPN) {
              << m_baseDir.dirName();
 
     foreach (QString path, toDelete) {
-        const wchar_t *szExistingFile = path.toStdWString().c_str();
+        std::wstring stdwsExistingFile(path.toStdWString());
+        const wchar_t *szExistingFile = stdwsExistingFile.c_str();
         MoveFileEx(szExistingFile, NULL, MOVEFILE_DELAY_UNTIL_REBOOT);
     }
 }
