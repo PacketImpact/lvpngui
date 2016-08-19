@@ -24,6 +24,83 @@
 #include <taskschd.h>
 
 
+struct VersionFileStruct {
+    QString name;
+    QString version;
+};
+
+bool readVersionFile(const QString &path, VersionFileStruct &s) {
+    QFile file(path);
+    if (!file.open(QFile::ReadOnly)) {
+        return false;
+    }
+
+    QString content(file.readAll());
+    content = content.trimmed();
+
+    QStringList parts(content.split(" "));
+    if (parts.size() != 2) {
+        return false;
+    }
+
+    s.name = parts[0];
+    s.version = parts[1];
+    return true;
+}
+
+// Split in "-", then ".", compare each part from left to right
+// Supports integer and ascii comparison for each part.
+bool versionHigherThan(const QString &va, const QString &vb) {
+    if (va.contains("-") || vb.contains("-")) {
+        QStringList aParts(va.split("-"));
+        QStringList bParts(vb.split("-"));
+        int maxParts = std::max(aParts.size(), bParts.size());
+        for (int i=0; i<maxParts; i++) {
+            if (aParts.size() <= i) {
+                return false;
+            }
+            if (bParts.size() <= i) {
+                return true;
+            }
+            if (aParts.at(i) == bParts.at(i)) {
+                continue;
+            }
+            return versionHigherThan(aParts.at(i), bParts.at(i));
+        }
+        return false; // equal
+    }
+    else {
+        QStringList aParts(va.split("."));
+        QStringList bParts(vb.split("."));
+        int maxParts = std::max(aParts.size(), bParts.size());
+        for (int i=0; i<maxParts; i++) {
+            if (aParts.size() <= i) {
+                return false;
+            }
+            if (bParts.size() <= i) {
+                return true;
+            }
+            QString aPart(aParts.at(i));
+            QString bPart(bParts.at(i));
+
+            if (aPart == bPart) {
+                continue;
+            }
+
+            bool aIntOk, bIntOk;
+            int aInt = aPart.toInt(&aIntOk, 10);
+            int bInt = bPart.toInt(&bIntOk, 10);
+            if (aIntOk && bIntOk) {
+                return aInt > bInt;
+            } else {
+                return aPart > bPart;
+            }
+        }
+        return false; // equal
+    }
+}
+
+
 bool createLink(QString linkPath, QString destPath, QString desc) {
     HRESULT hres;
     IShellLink* psl;
@@ -167,15 +244,47 @@ QString Installer::getArch() {
     throw std::runtime_error("Unsupported arch: " + arch.toStdString());
 }
 
-bool Installer::isInstalled() {
-    /*
-     * TODO: Check for the current version.
-     * If it's readable and:
-     * - higher, return true.
-     * - lower, return false.
-     * - same, compare .exe hashs.
-     */
+Installer::State Installer::getInstallState() {
+    // Check installed version and hash
+    {
+        QString appSrcPath = QCoreApplication::applicationFilePath();
+        QString appLocPath = m_baseDir.filePath(VPNGUI_EXENAME);
+        QString versionPath = m_baseDir.filePath("version.txt");
+        VersionFileStruct v;
+        if (!readVersionFile(versionPath, v)) {
+            qDebug() << "Installer: failed to read version file: " << versionPath;
+            return NotInstalled;
+        }
+        if (v.name != m_vpngui.getName()) {
+            qDebug() << "Installer: version file: different name";
+            return NotInstalled;
+        }
+        if (v.version == m_vpngui.getFullVersion()) {
+            // Same version, check hash if not the same exe file
+            if (appSrcPath != appLocPath) {
+                QByteArray appSrcHash = hashFile(appSrcPath);
+                QByteArray appLocHash = hashFile(appLocPath);
+                if (appSrcHash.length() == 0 || appSrcHash != appLocHash) {
+                    qDebug() << "Installer: same version, different hash for app binary";
+                    return NotInstalled;
+                }
+            }
+        }
+        else if (versionHigherThan(m_vpngui.getFullVersion(), v.version)) {
+            // This is a newer version
+            qDebug() << "Installer: found older version";
+            return NotInstalled;
+        }
+        else {
+            // This is an older version.
+            // What to do here? I don't know, really. Quit here and start the
+            // newer one looks good enough for most users.
+            qDebug() << "Installer: version file: higher version found";
+            return HigherVersionFound;
+        }
+    }
 
+    // Check OpenVPN files hashes
     QMap<QString, QString>::iterator it;
     for(it=m_index.begin(); it != m_index.end(); ++it) {
         QString filename = it.key();
@@ -185,86 +294,97 @@ bool Installer::isInstalled() {
         QFile f(path);
         if (!f.open(QIODevice::ReadOnly)) {
             qDebug() << "Installer: cannot open: " << path;
-            return false;
+            return NotInstalled;
         }
         QCryptographicHash hasher(QCryptographicHash::Sha1);
         if (!hasher.addData(&f)) {
             qDebug() << "Installer: cannot hash: " << path;
-            return false;
+            return NotInstalled;
         }
         QString new_hash = QString(hasher.result().toHex());
         if (new_hash != hash) {
             qDebug() << "Installer: different hash for " << path << ": " << new_hash;
-            return false;
+            return NotInstalled;
         }
     }
 
-    // Check current binary (upgrades)
-    QString appSrcPath = QCoreApplication::applicationFilePath();
-    QString appLocPath = m_baseDir.filePath(VPNGUI_EXENAME);
-    QByteArray appSrcHash = hashFile(appSrcPath);
-    QByteArray appLocHash = hashFile(appLocPath);
-    if (appSrcHash.length() == 0 || appSrcHash != appLocHash) {
-        qDebug() << "Installer: different hash for app binary";
-        return false;
-    }
-
+    // Check TAP
     if (!isTAPInstalled(getArch() == "64")) {
-        return false;
+        qDebug() << "Installer: TAP not installed";
+        return NotInstalled;
     }
 
-    return true;
+    return Installed;
 }
 
-void Installer::install() {
+Installer::State Installer::install() {
     if (!m_baseDir.exists()) {
         if (!m_baseDir.mkpath(".")) {
             throw std::runtime_error("Cannot mkdir: " + m_baseDir.path().toStdString());
         }
     }
 
-    QMap<QString, QString>::iterator it;
-    for(it=m_index.begin(); it != m_index.end(); ++it) {
-        QString filename = it.key();
-        QString resPath(":/bin" + getArch() + "/" + filename);
-        QString locPath(m_baseDir.filePath(filename));
-
-        QFile resFile(resPath);
-        if (!resFile.open(QIODevice::ReadOnly)) {
-            throw std::runtime_error("Cannot read file: " + resPath.toStdString() + " -> " + locPath.toStdString());
-        }
-
-        QFile locFile(locPath);
-        if (!locFile.open(QIODevice::WriteOnly)) {
-            throw std::runtime_error("Cannot write file: " + resPath.toStdString() + " -> " + locPath.toStdString());
-        }
-
-        locFile.write(resFile.readAll());
-
-        locFile.close();
-        resFile.close();
-    }
-
-    // Copy current binary there too
     QString appSrcPath = QCoreApplication::applicationFilePath();
     QString appLocPath = m_baseDir.filePath(VPNGUI_EXENAME);
-    if (QFile(appLocPath).exists()) {
-        while (!QFile(appLocPath).remove()) {
-            QMessageBox::StandardButton r;
-            QString msg(QCoreApplication::tr("%1 is already running. Please close it to upgrade."));
-            msg = msg.arg(m_vpngui.getDisplayName());
-            r = QMessageBox::warning(NULL, m_vpngui.getDisplayName(), msg,
-                                     QMessageBox::Cancel | QMessageBox::Ok);
-            if (r == QMessageBox::Cancel) {
-                break;
-            }
+
+    // Create the version.txt file with current name, version and hash
+    {
+        QString versionPath(m_baseDir.filePath("version.txt"));
+        QFile versionFile(versionPath);
+        if (!versionFile.open(QFile::WriteOnly)) {
+            throw std::runtime_error("Cannot write file: " + versionPath.toStdString());
         }
-        if (QFile(appLocPath).exists() && !QFile(appLocPath).remove()) {
-            throw std::runtime_error("Cannot delete for upgrade: " + appLocPath.toStdString());
+        QString content(m_vpngui.getName() + " " + m_vpngui.getFullVersion());
+        versionFile.write(content.toUtf8());
+        versionFile.close();
+    }
+
+
+    // Copy OpenVPN files listed in this arch's index.txt
+    {
+        QMap<QString, QString>::iterator it;
+        for(it=m_index.begin(); it != m_index.end(); ++it) {
+            QString filename = it.key();
+            QString resPath(":/bin" + getArch() + "/" + filename);
+            QString locPath(m_baseDir.filePath(filename));
+
+            QFile resFile(resPath);
+            if (!resFile.open(QIODevice::ReadOnly)) {
+                throw std::runtime_error("Cannot read file: " + resPath.toStdString() + " -> " + locPath.toStdString());
+            }
+
+            QFile locFile(locPath);
+            if (!locFile.open(QIODevice::WriteOnly)) {
+                throw std::runtime_error("Cannot write file: " + resPath.toStdString() + " -> " + locPath.toStdString());
+            }
+
+            locFile.write(resFile.readAll());
+
+            locFile.close();
+            resFile.close();
         }
     }
-    if (!QFile::copy(appSrcPath, appLocPath)) {
-        throw std::runtime_error("Cannot copy file: " + appSrcPath.toStdString() + " -> " + appLocPath.toStdString());
+
+    // Copy current binary there too, if it's not the same
+    if (appSrcPath != appLocPath) {
+        if (QFile(appLocPath).exists()) {
+            while (!QFile(appLocPath).remove()) {
+                QMessageBox::StandardButton r;
+                QString msg(QCoreApplication::tr("%1 is already running. Please close it to upgrade."));
+                msg = msg.arg(m_vpngui.getDisplayName());
+                r = QMessageBox::warning(NULL, m_vpngui.getDisplayName(), msg,
+                                         QMessageBox::Cancel | QMessageBox::Ok);
+                if (r == QMessageBox::Cancel) {
+                    return NotInstalled;
+                }
+            }
+            if (QFile(appLocPath).exists() && !QFile(appLocPath).remove()) {
+                throw std::runtime_error("Cannot delete for upgrade: " + appLocPath.toStdString());
+            }
+        }
+        if (!QFile::copy(appSrcPath, appLocPath)) {
+            throw std::runtime_error("Cannot copy file: " + appSrcPath.toStdString() + " -> " + appLocPath.toStdString());
+        }
     }
 
     // Start TAP installation
@@ -276,18 +396,35 @@ void Installer::install() {
         tapInstaller.waitForFinished(-1);
     }
 
-    // Make a desktop shortcut
-    QString lnkMsg(QCoreApplication::tr("%1 has been installed. Create a desktop shortcut?"));
-    lnkMsg = lnkMsg.arg(m_vpngui.getDisplayName());
-    QMessageBox::StandardButton r = QMessageBox::question(NULL, m_vpngui.getDisplayName(), lnkMsg);
-    if (r == QMessageBox::Yes) {
-        QDir homeDir(QString(qgetenv("USERPROFILE")));
-        QDir desktopDir(homeDir.filePath("Desktop"));
-        QString shortcut(desktopDir.filePath(m_vpngui.getDisplayName() + ".lnk"));
+    // Make Start menu shortcut
+    {
+        QDir appdataDir(QString(qgetenv("APPDATA")));
+        QDir startMenuDir(appdataDir.filePath("Microsoft\\Windows\\Start Menu\\Programs"));
+        if (!startMenuDir.exists()) {
+            startMenuDir.mkpath(".");
+        }
+        QString shortcut(startMenuDir.filePath(m_vpngui.getDisplayName() + ".lnk"));
         if (!createLink(shortcut, appLocPath, m_vpngui.getDisplayName())) {
-            throw std::runtime_error("Failed to create link: " + shortcut.toStdString() + " -> " + appLocPath.toStdString());
+            throw std::runtime_error("Failed to create start menu link: " + shortcut.toStdString() + " -> " + appLocPath.toStdString());
         }
     }
+
+    // Make a desktop shortcut
+    {
+        QString lnkMsg(QCoreApplication::tr("%1 has been installed. Create a desktop shortcut?"));
+        lnkMsg = lnkMsg.arg(m_vpngui.getDisplayName());
+        QMessageBox::StandardButton r = QMessageBox::question(NULL, m_vpngui.getDisplayName(), lnkMsg);
+        if (r == QMessageBox::Yes) {
+            QDir homeDir(QString(qgetenv("USERPROFILE")));
+            QDir desktopDir(homeDir.filePath("Desktop"));
+            QString shortcut(desktopDir.filePath(m_vpngui.getDisplayName() + ".lnk"));
+            if (!createLink(shortcut, appLocPath, m_vpngui.getDisplayName())) {
+                throw std::runtime_error("Failed to create link: " + shortcut.toStdString() + " -> " + appLocPath.toStdString());
+            }
+        }
+    }
+
+    return Installed;
 }
 
 void Installer::uninstall(bool waitForOpenVPN) {
@@ -313,27 +450,40 @@ void Installer::uninstall(bool waitForOpenVPN) {
     m_baseDir.removeRecursively();
 
     // Now the desktop shortcut
-    QDir homeDir(QString(qgetenv("USERPROFILE")));
-    QDir desktopDir(homeDir.filePath("Desktop"));
-    QString shortcutPath(desktopDir.filePath(m_vpngui.getDisplayName() + ".lnk"));
-    QFile shortcut(shortcutPath);
-    if (shortcut.symLinkTarget() == appExePath) {
-        shortcut.remove();
+    {
+        QDir homeDir(QString(qgetenv("USERPROFILE")));
+        QDir desktopDir(homeDir.filePath("Desktop"));
+        QString shortcutPath(desktopDir.filePath(m_vpngui.getDisplayName() + ".lnk"));
+        QFile shortcut(shortcutPath);
+        if (shortcut.symLinkTarget() == appExePath) {
+            shortcut.remove();
+        }
+    }
+
+    // And the start menu shortcut
+    {
+        QDir appdataDir(QString(qgetenv("APPDATA")));
+        QDir startMenuDir(appdataDir.filePath("Microsoft\\Windows\\Start Menu\\Programs"));
+        QFile shortcut(startMenuDir.filePath(m_vpngui.getDisplayName() + ".lnk"));
+        if (shortcut.symLinkTarget() == appExePath) {
+            shortcut.remove();
+        }
     }
 
     // The main .exe and .lock files should still exist now
     // they have to be deleted later.
+    {
+        QStringList toDelete;
+        toDelete << appExePath
+                 << m_baseDir.filePath("lvpngui.lock")
+                 << m_baseDir.path()
+                 << m_baseDir.dirName();
 
-    QStringList toDelete;
-    toDelete << appExePath
-             << m_baseDir.filePath("lvpngui.lock")
-             << m_baseDir.path()
-             << m_baseDir.dirName();
-
-    foreach (QString path, toDelete) {
-        std::wstring stdwsExistingFile(path.toStdWString());
-        const wchar_t *szExistingFile = stdwsExistingFile.c_str();
-        MoveFileEx(szExistingFile, NULL, MOVEFILE_DELAY_UNTIL_REBOOT);
+        foreach (QString path, toDelete) {
+            std::wstring stdwsExistingFile(path.toStdWString());
+            const wchar_t *szExistingFile = stdwsExistingFile.c_str();
+            MoveFileEx(szExistingFile, NULL, MOVEFILE_DELAY_UNTIL_REBOOT);
+        }
     }
 }
 

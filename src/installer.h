@@ -8,6 +8,8 @@
 
 class VPNGUI;
 
+bool versionHigherThan(const QString &va, const QString &vb);
+
 /*
  * Manages the local installation.
  * install() extracts ressources somewhere in %APPDATA% (getDir())
@@ -18,10 +20,16 @@ class VPNGUI;
 class Installer
 {
 public:
+    enum State {
+        NotInstalled,
+        Installed,
+        HigherVersionFound,
+    };
+
     Installer(const VPNGUI &vpngui);
 
-    bool isInstalled();
-    void install();
+    State getInstallState();
+    State install();
     void uninstall(bool waitForOpenVPN=true);
 
     bool setStartOnBoot(bool enabled);

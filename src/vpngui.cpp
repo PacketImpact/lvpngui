@@ -117,6 +117,17 @@ VPNGUI::VPNGUI(QObject *parent)
         throw InitializationError(getName(), tr("%1 is already running.").arg(getName()));
     }
 
+    Installer::State installState = m_installer.getInstallState();
+    if (installState == Installer::NotInstalled) {
+        m_installer.install();
+        m_trayIcon.showMessage(tr("Installed"),
+                               tr("%1 is now installed! (version %2)")
+                               .arg(getDisplayName(), getFullVersion()));
+    }
+    else if (installState == Installer::HigherVersionFound) {
+        throw InitializationError(getName(), tr("%1 is already installed with a higher version.").arg(getName()));
+    }
+
     m_connectMenu = m_trayMenu.addMenu(tr("Connect"));
     m_disconnectAction = m_trayMenu.addAction(tr("Disconnect"));
     QAction *logAction = m_trayMenu.addAction(tr("View Log"));
@@ -134,13 +145,6 @@ VPNGUI::VPNGUI(QObject *parent)
     connect(m_disconnectAction, SIGNAL(triggered(bool)), this, SLOT(vpnDisconnect()));
 
     connect(&m_openvpn, SIGNAL(statusUpdated(OpenVPN::Status)), this, SLOT(vpnStatusUpdated(OpenVPN::Status)));
-
-    if (!m_installer.isInstalled()) {
-        m_installer.install();
-        m_trayIcon.showMessage(tr("Installed"),
-                               tr("%1 is now installed! (version %2)")
-                               .arg(getDisplayName(), getFullVersion()));
-    }
 
     // Cleanup OpenVPN config dir
     m_configDir = QDir(m_installer.getDir().filePath("openvpn_config"));
@@ -543,6 +547,9 @@ void VPNGUI::latestVersionQueryFinished() {
             return;
         }
         if (version.isEmpty() || url.isEmpty()) {
+            return;
+        }
+        if (versionHigherThan(getFullVersion(), version)) {
             return;
         }
 
