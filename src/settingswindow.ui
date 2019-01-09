@@ -143,6 +143,13 @@ The slowest, but less likely to be filtered. Please try UDP first.</string>
           </widget>
          </item>
          <item>
+          <widget class="QPushButton" name="reinstallTAPButton">
+           <property name="text">
+            <string>Reinstall TAP</string>
+           </property>
+          </widget>
+         </item>
+         <item>
           <spacer name="horizontalSpacer_3">
            <property name="orientation">
             <enum>Qt::Horizontal</enum>

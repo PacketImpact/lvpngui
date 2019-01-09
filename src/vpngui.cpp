@@ -89,18 +89,18 @@ void VPNCreds::clear() {
 
 VPNGUI::VPNGUI(QObject *parent)
     : QObject(parent)
-    , m_connectMapper(NULL)
+    , m_connectMapper(nullptr)
     , m_trayMenu()
     , m_trayIcon(this)
-    , m_latestVersionReply(NULL)
-    , m_gatewaysReply(NULL)
+    , m_latestVersionReply(nullptr)
+    , m_gatewaysReply(nullptr)
     , m_providerSettings(":/provider.ini", QSettings::IniFormat)
     , m_appSettings(VPNGUI_ORGNAME, getName())
     , m_qnam(this)
     , m_installer(*this)
     , m_openvpn(this, m_installer.getDir().filePath("openvpn.exe"))
-    , m_logWindow(NULL)
-    , m_settingsWindow(NULL)
+    , m_logWindow(nullptr)
+    , m_settingsWindow(nullptr)
     , m_lockFile(m_installer.getDir().filePath("lvpngui.lock"))
 {
     // Update with provider.ini values
@@ -219,7 +219,7 @@ void VPNGUI::openLogWindow() {
         delete m_logWindow;
     }
 
-    m_logWindow = new LogWindow(NULL, *this, m_openvpn);
+    m_logWindow = new LogWindow(nullptr, *this, m_openvpn);
     m_logWindow->show();
 }
 
@@ -230,7 +230,7 @@ void VPNGUI::openSettingsWindow() {
         delete m_settingsWindow;
     }
 
-    m_settingsWindow = new SettingsWindow(NULL, *this, m_appSettings);
+    m_settingsWindow = new SettingsWindow(nullptr, *this, m_appSettings);
     connect(m_settingsWindow, SIGNAL(settingsChanged(QSet<QString>)), this, SLOT(settingsChanged(QSet<QString>)));
     m_settingsWindow->show();
 }
@@ -299,7 +299,7 @@ VPNCreds VPNGUI::handleAuth(bool failed) {
         }
     }
 
-    AuthDialog d(NULL, *this);
+    AuthDialog d(nullptr, *this);
     if (d.exec() != QDialog::Rejected) {
         c.username = d.getUsername();
         c.password = d.getPassword();
@@ -472,7 +472,7 @@ QString VPNGUI::makeOpenVPNConfig(const QString &hostname) {
 void VPNGUI::confirmUninstall() {
     QString msg(tr("Are you sure you want to uninstall %1 and delete the configuration?").arg(getName()));
     QMessageBox::StandardButton confirm;
-    confirm = QMessageBox::information(NULL, tr("Uninstall"), msg,
+    confirm = QMessageBox::information(nullptr, tr("Uninstall"), msg,
                                        QMessageBox::Yes | QMessageBox::No);
     if (confirm == QMessageBox::Yes) {
         uninstall();
@@ -485,7 +485,7 @@ void VPNGUI::uninstall() {
     m_appSettings.clear();
     m_installer.uninstall();
 
-    QMessageBox::information(NULL, tr("Uninstall"),
+    QMessageBox::information(nullptr, tr("Uninstall"),
                              tr("%1 has been uninstalled.").arg(getName()));
     QApplication::instance()->quit();
 }
@@ -572,7 +572,7 @@ void VPNGUI::latestVersionQueryFinished() {
         message += tr("A new version of %1 (%2 -> %3) has been released. You can download it here:")
                    .arg(getDisplayName(), getFullVersion(), version);
         message += "<br />" + QString("<a href='%1'>%1</a>").arg(url.toHtmlEscaped());
-        QMessageBox msgBox(NULL);
+        QMessageBox msgBox(nullptr);
         msgBox.setIcon(QMessageBox::Information);
         msgBox.setWindowTitle(tr("New version"));
         msgBox.setTextFormat(Qt::RichText);
@@ -595,6 +595,10 @@ const QSettings &VPNGUI::getBrandingSettings() const {
 
 const QSettings &VPNGUI::getAppSettings() const {
     return m_appSettings;
+}
+
+const Installer &VPNGUI::getInstaller() const {
+    return m_installer;
 }
 
 const QList<VPNGateway> &VPNGUI::getGatewayList() const {

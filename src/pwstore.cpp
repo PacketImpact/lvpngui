@@ -106,7 +106,7 @@ QByteArray getMachineGUID() {
 QByteArray getVolumeHash() {
    DWORD serialNum = 0;
 
-   GetVolumeInformation( L"c:\\", NULL, 0, &serialNum, NULL, NULL, NULL, 0 );
+   GetVolumeInformation( L"c:\\", nullptr, 0, &serialNum, nullptr, nullptr, nullptr, 0 );
 
    return QByteArray((char*)&serialNum, 4);
 }

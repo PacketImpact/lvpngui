@@ -118,11 +118,11 @@ bool createLink(QString linkPath, QString destPath, QString desc) {
     desc.toWCharArray(lpszDesc);
     lpszDesc[desc.length()] = 0;
 
-    CoInitialize(NULL);
+    CoInitialize(nullptr);
 
     // Get a pointer to the IShellLink interface. It is assumed that CoInitialize
     // has already been called.
-    hres = CoCreateInstance(CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER, IID_IShellLink, (LPVOID*)&psl);
+    hres = CoCreateInstance(CLSID_ShellLink, nullptr, CLSCTX_INPROC_SERVER, IID_IShellLink, (LPVOID*)&psl);
     if (SUCCEEDED(hres)) {
         IPersistFile* ppf;
 
@@ -167,7 +167,7 @@ bool isTAPInstalled(bool w64) {
     WCHAR szBuffer[512];
     DWORD dwBufferSize = sizeof(szBuffer);
     ULONG nError;
-    nError = RegQueryValueEx(hKey, NULL, 0, NULL, (LPBYTE)szBuffer, &dwBufferSize);
+    nError = RegQueryValueEx(hKey, nullptr, nullptr, nullptr, (LPBYTE)szBuffer, &dwBufferSize);
     if (ERROR_SUCCESS != nError) {
         qDebug() << "Failed to get value:" << nError;
         return false;
@@ -372,7 +372,7 @@ Installer::State Installer::install() {
                 QMessageBox::StandardButton r;
                 QString msg(QCoreApplication::tr("%1 is already running. Please close it to upgrade."));
                 msg = msg.arg(m_vpngui.getDisplayName());
-                r = QMessageBox::warning(NULL, m_vpngui.getDisplayName(), msg,
+                r = QMessageBox::warning(nullptr, m_vpngui.getDisplayName(), msg,
                                          QMessageBox::Cancel | QMessageBox::Ok);
                 if (r == QMessageBox::Cancel) {
                     return NotInstalled;
@@ -391,9 +391,7 @@ Installer::State Installer::install() {
     // I'd like to make this silent (/S) but since it may take some time and
     // ask a confirmation for the driver, I think it's better to show something.
     if (!isTAPInstalled(getArch() == "64")) {
-        QProcess tapInstaller;
-        tapInstaller.start(m_baseDir.filePath("tap-windows.exe"));
-        tapInstaller.waitForFinished(-1);
+        installTAP();
     }
 
     // Make Start menu shortcut
@@ -413,7 +411,7 @@ Installer::State Installer::install() {
     {
         QString lnkMsg(QCoreApplication::tr("%1 has been installed. Create a desktop shortcut?"));
         lnkMsg = lnkMsg.arg(m_vpngui.getDisplayName());
-        QMessageBox::StandardButton r = QMessageBox::question(NULL, m_vpngui.getDisplayName(), lnkMsg);
+        QMessageBox::StandardButton r = QMessageBox::question(nullptr, m_vpngui.getDisplayName(), lnkMsg);
         if (r == QMessageBox::Yes) {
             QDir homeDir(QString(qgetenv("USERPROFILE")));
             QDir desktopDir(homeDir.filePath("Desktop"));
@@ -425,6 +423,12 @@ Installer::State Installer::install() {
     }
 
     return Installed;
+}
+
+void Installer::installTAP() const {
+    QProcess tapInstaller;
+    tapInstaller.start(m_baseDir.filePath("tap-windows.exe"));
+    tapInstaller.waitForFinished(-1);
 }
 
 void Installer::uninstall(bool waitForOpenVPN) {
@@ -482,7 +486,7 @@ void Installer::uninstall(bool waitForOpenVPN) {
         foreach (QString path, toDelete) {
             std::wstring stdwsExistingFile(path.toStdWString());
             const wchar_t *szExistingFile = stdwsExistingFile.c_str();
-            MoveFileEx(szExistingFile, NULL, MOVEFILE_DELAY_UNTIL_REBOOT);
+            MoveFileEx(szExistingFile, nullptr, MOVEFILE_DELAY_UNTIL_REBOOT);
         }
     }
 }
@@ -565,7 +569,7 @@ bool Installer::setStartOnBoot(bool enabled) {
         p.kill();
 
         if (p.exitCode() != 0) {
-            QMessageBox::critical(NULL,
+            QMessageBox::critical(nullptr,
                                   "schtask error: " + QString::number(p.exitCode()),
                                   QString::fromLocal8Bit(p.readAll()));
             return false;

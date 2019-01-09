@@ -73,6 +73,7 @@ public:
     const QSettings &getBrandingSettings() const;
     const QSettings &getAppSettings() const;
     const QList<VPNGateway> &getGatewayList() const;
+    const Installer &getInstaller() const;
 
     QString getName() const;
     QString getDisplayName() const;

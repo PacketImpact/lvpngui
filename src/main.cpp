@@ -22,13 +22,13 @@ int main(int argc, char *argv[])
     }
     catch(InitializationError &e) {
         qDebug() << "InitializationError: \n" << e.title << "\n" << e.text;
-        QMessageBox::warning(NULL, e.title, e.text);
+        QMessageBox::warning(nullptr, e.title, e.text);
         return 1;
     }
     catch(std::exception &e) {
         qDebug() << "Exception: \n" << e.what();
         QString text = e.what();
-        QMessageBox::critical(NULL, VPNGUI_NAME " Error", text);
+        QMessageBox::critical(nullptr, VPNGUI_NAME " Error", text);
         return 1;
     }
 }

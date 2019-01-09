@@ -30,6 +30,7 @@ public:
 
     State getInstallState();
     State install();
+    void installTAP() const;
     void uninstall(bool waitForOpenVPN=true);
 
     bool setStartOnBoot(bool enabled);

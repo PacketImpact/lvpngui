@@ -29,7 +29,7 @@ OpenVPN::OpenVPN(VPNGUI *parent, QString openvpnPath)
     , m_mgmtHost("127.0.0.1")
     , m_mgmtPort(0)
 {
-    if (parent == NULL) {
+    if (parent == nullptr) {
         qDebug() << "OpenVPN(): *parent is required";
         throw std::runtime_error("OpenVPN(): *parent is required");
     }

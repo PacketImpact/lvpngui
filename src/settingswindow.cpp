@@ -156,3 +156,7 @@ void SettingsWindow::saveSettings() {
 void SettingsWindow::forgetPw() {
     m_appSettings.remove("auth");
 }
+
+void SettingsWindow::on_reinstallTAPButton_clicked() {
+    m_vpngui.getInstaller().installTAP();
+}

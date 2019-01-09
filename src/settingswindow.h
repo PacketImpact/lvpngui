@@ -28,6 +28,9 @@ public slots:
     void saveAndClose();
     void forgetPw();
 
+private slots:
+    void on_reinstallTAPButton_clicked();
+
 private:
     Ui::SettingsWindow *ui;
     const VPNGUI &m_vpngui;
