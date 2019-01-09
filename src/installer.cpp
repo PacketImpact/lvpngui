@@ -339,6 +339,8 @@ Installer::State Installer::install() {
         versionFile.close();
     }
 
+    // Unpack the CHANGELOG.html so we can link to it
+    extractFile(":/CHANGELOG.html", m_baseDir.filePath("CHANGELOG.html"));
 
     // Copy OpenVPN files listed in this arch's index.txt
     {
@@ -348,20 +350,7 @@ Installer::State Installer::install() {
             QString resPath(":/openvpn/openvpn-" OPENVPN_VERSION "-" + getArch() + "/" + filename);
             QString locPath(m_baseDir.filePath(filename));
 
-            QFile resFile(resPath);
-            if (!resFile.open(QIODevice::ReadOnly)) {
-                throw std::runtime_error("Cannot read file: " + resPath.toStdString() + " -> " + locPath.toStdString());
-            }
-
-            QFile locFile(locPath);
-            if (!locFile.open(QIODevice::WriteOnly)) {
-                throw std::runtime_error("Cannot write file: " + resPath.toStdString() + " -> " + locPath.toStdString());
-            }
-
-            locFile.write(resFile.readAll());
-
-            locFile.close();
-            resFile.close();
+            extractFile(resPath, locPath);
         }
     }
 
@@ -423,6 +412,23 @@ Installer::State Installer::install() {
     }
 
     return Installed;
+}
+
+void Installer::extractFile(const QString &resPath, const QString &locPath) {
+    QFile resFile(resPath);
+    if (!resFile.open(QIODevice::ReadOnly)) {
+        throw std::runtime_error("Cannot read file: " + resPath.toStdString() + " -> " + locPath.toStdString());
+    }
+
+    QFile locFile(locPath);
+    if (!locFile.open(QIODevice::WriteOnly)) {
+        throw std::runtime_error("Cannot write file: " + resPath.toStdString() + " -> " + locPath.toStdString());
+    }
+
+    locFile.write(resFile.readAll());
+
+    locFile.close();
+    resFile.close();
 }
 
 void Installer::installTAP() const {

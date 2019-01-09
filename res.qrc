@@ -5,6 +5,8 @@
         <file>translations/lvpngui_fr.qm</file>
         <file>schtasks_template.xml</file>
         <file alias="icon_disabled.png">provider/icon_disabled.png</file>
+        <file>CHANGELOG.md</file>
+        <file>CHANGELOG.html</file>
     </qresource>
     <qresource prefix="/openvpn">
         <file>openvpn-v2.4-32/index.txt</file>

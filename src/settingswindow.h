@@ -3,6 +3,7 @@
 
 #include <QWidget>
 #include <QSettings>
+#include <QMessageBox>
 
 class VPNGUI;
 
@@ -30,6 +31,7 @@ public slots:
 
 private slots:
     void on_reinstallTAPButton_clicked();
+    void on_aboutQtButton_clicked();
 
 private:
     Ui::SettingsWindow *ui;

@@ -190,12 +190,7 @@ QString VPNGUI::getDisplayName() const {
 }
 
 QString VPNGUI::getFullVersion() const {
-    QString brandedVersion = m_providerSettings.value("version").toString();
-    QString fullVersion(VPNGUI_VERSION);
-    if (brandedVersion.length() > 0) {
-        fullVersion += "-" + brandedVersion;
-    }
-    return fullVersion;
+    return QString(VPNGUI_VERSION);
 }
 
 QString VPNGUI::getURL() const {

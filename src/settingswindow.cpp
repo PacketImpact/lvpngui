@@ -38,8 +38,14 @@ SettingsWindow::SettingsWindow(QWidget *parent, const VPNGUI &vpngui, QSettings 
 
     setWindowTitle(vpngui.getDisplayName() + " " + tr("Settings"));
 
+    QString changelog_path = m_vpngui.getInstaller().getDir().filePath("CHANGELOG.html");
+    QString version_text = tr("Version %1 - <a href='%2'>changelog</a>")
+            .arg(vpngui.getFullVersion())
+            .arg(changelog_path);
+
     ui->aboutTitleLabel->setText(vpngui.getDisplayName());
-    ui->aboutVersionLabel->setText(tr("Version %1").arg(vpngui.getFullVersion()));
+    ui->aboutVersionLabel->setText(version_text);
+    ui->aboutVersionLabel->setTextFormat(Qt::RichText);
 
     QString aboutBaseText(tr("%1 by %2"));
     aboutBaseText = aboutBaseText.arg("<a href='" VPNGUI_URL "'>" VPNGUI_DISPLAY_NAME "</a>",
@@ -159,4 +165,8 @@ void SettingsWindow::forgetPw() {
 
 void SettingsWindow::on_reinstallTAPButton_clicked() {
     m_vpngui.getInstaller().installTAP();
+}
+
+void SettingsWindow::on_aboutQtButton_clicked() {
+    QMessageBox::aboutQt(this);
 }

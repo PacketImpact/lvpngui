@@ -40,6 +40,7 @@ public:
 private:
     QString getArch();
     void loadIndex();
+    void extractFile(const QString &src, const QString &dst);
 
     const VPNGUI &m_vpngui;
     QDir m_baseDir;

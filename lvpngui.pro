@@ -57,6 +57,10 @@ LIBPATH += C:/CryptoPP/release
 INCLUDEPATH += C:/CryptoPP/include
 LIBS += -lcryptopp
 
+changelog.target = CHANGELOG.html
+changelog.commands = python $$PWD/render_changelog.py
+QMAKE_EXTRA_TARGETS += changelog
+PRE_TARGETDEPS += CHANGELOG.html
 
 win32 {
     RC_FILE = lvpngui.rc
