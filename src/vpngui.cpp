@@ -416,9 +416,9 @@ QString VPNGUI::makeOpenVPNConfig(const QString &hostname) {
     if (m_providerSettings.value("openvpn_defgw").toBool()) {
         s << "redirect-gateway def1\n";
     }
-    if (m_providerSettings.value("openvpn_comp").toBool()) {
-        s << "comp-lzo yes\n";
-    }
+    /*if (m_providerSettings.value("openvpn_comp").toBool()) {
+        s << "compress lzo\n";
+    }*/
 
     if (m_providerSettings.value("openvpn_ipv6", true).toBool()
         && m_appSettings.value("ipv6_tunnel", true).toBool()) {
@@ -517,6 +517,21 @@ void VPNGUI::gatewaysQueryFinished() {
         gw.display_name = loc["country_name"].toString();
         gw.hostname = loc["hostname"].toString();
         m_gateways.append(gw);
+    }
+
+    // Add any additional gateway
+    QString addConfig(m_appSettings.value("additional_config").toString());
+    for (QString &line : addConfig.split('\n')) {
+        if (!line.startsWith("#$")) {
+            continue;
+        }
+        QStringList parts(line.split(' '));
+        if (parts.length() == 3 && parts[1].trimmed() == "server") {
+            VPNGateway gw;
+            gw.hostname = parts[2].trimmed();
+            gw.display_name = "$ " + gw.hostname;
+            m_gateways.append(gw);
+        }
     }
 
     qSort(m_gateways.begin(), m_gateways.end(), &gatewaysSort);

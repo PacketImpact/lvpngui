@@ -10,7 +10,7 @@
 #include <cryptopp/aes.h>
 #include <cryptopp/authenc.h>
 
-#ifdef WIN32
+#ifdef _WIN32
 #include <windows.h>
 #include <intrin.h>
 

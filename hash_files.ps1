@@ -1,18 +1,10 @@
-
-$files = @(
-	"libpkcs11-helper-1.dll"
-	"openvpn.exe"
-	"ssleay32.dll"
-	"libeay32.dll"
-	"liblzo2-2.dll"
-	"tap-windows.exe"
-)
+Param([Parameter(Mandatory=$true)][string[]$Dir)
 
 function Hash-Files([string]$dir) {
-	$basePath = $PSScriptRoot + "\" + $dir
-	cd $dir
+	$basePath = Resolve-Path $dir
+	$files = Get-ChildItem -Path $dir -File -Force -Recurse |
+		% {join-path -Path $dir -ChildPath $_.Name}
 	$hashes = Get-FileHash $files -Algorithm SHA1 | Select "Hash", "Path"
-	cd ..
 	foreach ($row in $hashes) {
 		$row.Path = $row.Path.replace("$basePath", "")
 		if ($row.Path.StartsWith("\")) {
@@ -21,8 +13,11 @@ function Hash-Files([string]$dir) {
 		$row.Path = $row.Path.replace("\", "/")
 	}
 
-	$hashes | ConvertTo-Csv -delimiter ' ' -NoTypeInformation | % {$_.Replace('"','').ToLower()}  | Select -skip 1 | Out-File $dir/index.txt
+	$hashes |
+		ConvertTo-Csv -delimiter ' ' -NoTypeInformation |
+		% {$_.Replace('"','').ToLower()}  |
+		Select -skip 1 |
+		Out-File $dir/index.txt
 }
 
-Hash-Files "openvpn-32"
-Hash-Files "openvpn-64"
+Hash-Files $Dir

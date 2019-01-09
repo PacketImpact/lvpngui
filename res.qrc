@@ -6,22 +6,20 @@
         <file>schtasks_template.xml</file>
         <file alias="icon_disabled.png">provider/icon_disabled.png</file>
     </qresource>
-    <qresource prefix="/bin32">
-        <file alias="libeay32.dll">openvpn-32/libeay32.dll</file>
-        <file alias="liblzo2-2.dll">openvpn-32/liblzo2-2.dll</file>
-        <file alias="libpkcs11-helper-1.dll">openvpn-32/libpkcs11-helper-1.dll</file>
-        <file alias="openvpn.exe">openvpn-32/openvpn.exe</file>
-        <file alias="ssleay32.dll">openvpn-32/ssleay32.dll</file>
-        <file alias="tap-windows.exe">openvpn-32/tap-windows.exe</file>
-        <file alias="index.txt">openvpn-32/index.txt</file>
-    </qresource>
-    <qresource prefix="/bin64">
-        <file alias="libeay32.dll">openvpn-64/libeay32.dll</file>
-        <file alias="liblzo2-2.dll">openvpn-64/liblzo2-2.dll</file>
-        <file alias="libpkcs11-helper-1.dll">openvpn-64/libpkcs11-helper-1.dll</file>
-        <file alias="openvpn.exe">openvpn-64/openvpn.exe</file>
-        <file alias="ssleay32.dll">openvpn-64/ssleay32.dll</file>
-        <file alias="tap-windows.exe">openvpn-64/tap-windows.exe</file>
-        <file alias="index.txt">openvpn-64/index.txt</file>
+    <qresource prefix="/openvpn">
+        <file>openvpn-v2.4-32/index.txt</file>
+        <file>openvpn-v2.4-32/libcrypto-1_1.dll</file>
+        <file>openvpn-v2.4-32/liblzo2-2.dll</file>
+        <file>openvpn-v2.4-32/libpkcs11-helper-1.dll</file>
+        <file>openvpn-v2.4-32/libssl-1_1.dll</file>
+        <file>openvpn-v2.4-32/openvpn.exe</file>
+        <file>openvpn-v2.4-32/tap-windows.exe</file>
+        <file>openvpn-v2.4-64/index.txt</file>
+        <file>openvpn-v2.4-64/libcrypto-1_1-x64.dll</file>
+        <file>openvpn-v2.4-64/liblzo2-2.dll</file>
+        <file>openvpn-v2.4-64/libpkcs11-helper-1.dll</file>
+        <file>openvpn-v2.4-64/libssl-1_1-x64.dll</file>
+        <file>openvpn-v2.4-64/openvpn.exe</file>
+        <file>openvpn-v2.4-64/tap-windows.exe</file>
     </qresource>
 </RCC>

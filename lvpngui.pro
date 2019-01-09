@@ -11,6 +11,7 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 TARGET = lvpngui
 TEMPLATE = app
 
+CONFIG += c++11
 
 SOURCES += \
     src/main.cpp \
@@ -64,5 +65,7 @@ win32 {
     WIN_PWD = $$replace(PWD, /, \\)
     OUT_PWD_WIN = $$replace(OUT_PWD, /, \\)
 
-    Release:QMAKE_POST_LINK = "$$quote(C:/Program Files/Microsoft SDKs/Windows/v6.0A/bin/mt.exe) -manifest $$quote($$WIN_PWD\\$$basename(TARGET).manifest) -outputresource:$$quote($$OUT_PWD_WIN\\${DESTDIR_TARGET};1)"
+    DEFINES += "VERSION_PROVIDER=$$system(Powershell.exe -NoProfile -ExecutionPolicy Bypass -File $$WIN_PWD\\provider_version.ps1)"
+
+    Release:QMAKE_POST_LINK = "$$shell_quote(C:/Program Files/Microsoft SDKs/Windows/v6.0A/bin/mt.exe) -manifest $$shell_quote($$WIN_PWD\\$$basename(TARGET).manifest) -outputresource:$$shell_quote($$OUT_PWD_WIN\\${DESTDIR_TARGET};1)"
 }

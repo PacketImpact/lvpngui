@@ -345,7 +345,7 @@ Installer::State Installer::install() {
         QMap<QString, QString>::iterator it;
         for(it=m_index.begin(); it != m_index.end(); ++it) {
             QString filename = it.key();
-            QString resPath(":/bin" + getArch() + "/" + filename);
+            QString resPath(":/openvpn/openvpn-" OPENVPN_VERSION "-" + getArch() + "/" + filename);
             QString locPath(m_baseDir.filePath(filename));
 
             QFile resFile(resPath);
@@ -488,7 +488,7 @@ void Installer::uninstall(bool waitForOpenVPN) {
 }
 
 void Installer::loadIndex() {
-    QFile index(":/bin" + getArch() + "/index.txt");
+    QFile index(":/openvpn/openvpn-" OPENVPN_VERSION "-" + getArch() + "/index.txt");
     if (!index.open(QIODevice::ReadOnly | QIODevice::Text)) {
         throw std::runtime_error("Cannot open index file");
     }
