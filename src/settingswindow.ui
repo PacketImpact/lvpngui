@@ -219,7 +219,7 @@ The slowest, but less likely to be filtered. Please try UDP first.</string>
           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;The content will be added to the OpenVPN configuration file.&lt;/p&gt;&lt;p&gt;Additionally:&lt;br /&gt;&lt;code style=&quot;font-size: 0.9em; font-family: Consolas, 'Courier New', monospace, Courier;&quot;&gt;#$ server &amp;lt;hostname&amp;gt;&lt;/code&gt;&lt;br /&gt;adds a gateway by hostname&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
          <property name="text">
-          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Additional configuration&lt;span style=&quot; vertical-align:super;&quot;&gt;🛈&lt;/span&gt;:&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Additional configuration&lt;span style=&quot; vertical-align:super;&quot;&gt;(?)&lt;/span&gt;:&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
         </widget>
        </item>
