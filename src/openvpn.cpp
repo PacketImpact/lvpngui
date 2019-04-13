@@ -169,7 +169,7 @@ void OpenVPN::mgmtTryConnect() {
     m_mgmtSocket.abort();
     m_mgmtSocket.close();
 
-    m_mgmtSocket.connectToHost(m_mgmtHost, m_mgmtPort);
+    m_mgmtSocket.connectToHost(m_mgmtHost, static_cast<quint16>(m_mgmtPort));
 }
 
 void OpenVPN::mgmtConnected() {

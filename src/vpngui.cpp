@@ -58,7 +58,7 @@ QStringList VPNGUI::safeResolve(const QString &hostname) {
     nameservers.append("");
 
     // 3. Brand nameserver
-    QString providerNs(m_providerSettings.value("nameserver").toString());
+    QString providerNs(VpnFeatures::nameserver);
     if (!providerNs.isEmpty()) {
         nameservers.append(providerNs);
     }
@@ -76,7 +76,7 @@ QStringList VPNGUI::safeResolve(const QString &hostname) {
     throw std::runtime_error("DNS lookup failed");
 }
 
-
+VPNCreds::VPNCreds() {}
 VPNCreds::~VPNCreds() {
     clear();
 }
@@ -94,7 +94,6 @@ VPNGUI::VPNGUI(QObject *parent)
     , m_trayIcon(this)
     , m_latestVersionReply(nullptr)
     , m_gatewaysReply(nullptr)
-    , m_providerSettings(":/provider.ini", QSettings::IniFormat)
     , m_appSettings(VPNGUI_ORGNAME, getName())
     , m_qnam(this)
     , m_installer(*this)
@@ -103,11 +102,6 @@ VPNGUI::VPNGUI(QObject *parent)
     , m_settingsWindow(nullptr)
     , m_lockFile(m_installer.getDir().filePath("lvpngui.lock"))
 {
-    // Update with provider.ini values
-    qApp->setApplicationDisplayName(getDisplayName());
-    qApp->setApplicationName(getName());
-    qApp->setApplicationVersion(getFullVersion());
-
     // m_lockFile needs it before install() is called
     if (!m_installer.getDir().exists()) {
         m_installer.getDir().mkpath(".");
@@ -182,11 +176,11 @@ VPNGUI::~VPNGUI() {
 }
 
 QString VPNGUI::getName() const {
-    return m_providerSettings.value("name", VPNGUI_NAME).toString();
+    return QString(VpnFeatures::name);
 }
 
 QString VPNGUI::getDisplayName() const {
-    return m_providerSettings.value("display_name", VPNGUI_DISPLAY_NAME).toString();
+    return QString(VpnFeatures::display_name);
 }
 
 QString VPNGUI::getFullVersion() const {
@@ -194,7 +188,7 @@ QString VPNGUI::getFullVersion() const {
 }
 
 QString VPNGUI::getURL() const {
-    return m_providerSettings.value("url", VPNGUI_URL).toString();
+    return QString(VpnFeatures::url);
 }
 
 QString VPNGUI::getUserAgent() const {
@@ -231,7 +225,7 @@ void VPNGUI::openSettingsWindow() {
 }
 
 void VPNGUI::queryGateways() {
-    QString url(m_providerSettings.value("locations_url").toString());
+    QString url(VpnFeatures::locations_url);
 
     if (url.isEmpty()) {
         /*
@@ -251,7 +245,7 @@ void VPNGUI::queryGateways() {
 }
 
 void VPNGUI::queryLatestVersion() {
-    QString url(m_providerSettings.value("releases_url").toString());
+    QString url(VpnFeatures::releases_url);
 
     if (url.isEmpty()) {
         return;
@@ -408,27 +402,27 @@ QString VPNGUI::makeOpenVPNConfig(const QString &hostname) {
     s << "register-dns\n";
     s << "remote-random\n";
 
-    if (m_providerSettings.value("openvpn_defgw").toBool()) {
+    if (VpnFeatures::default_gw) {
         s << "redirect-gateway def1\n";
     }
     /*if (m_providerSettings.value("openvpn_comp").toBool()) {
         s << "compress lzo\n";
     }*/
 
-    if (m_providerSettings.value("openvpn_ipv6", true).toBool()
+    if (VpnFeatures::ipv6
         && m_appSettings.value("ipv6_tunnel", true).toBool()) {
         s << "tun-ipv6\n";
-        if (m_providerSettings.value("openvpn_defgw").toBool()) {
+        if (VpnFeatures::default_gw) {
             s << "route-ipv6 2000::/3\n";
         }
     }
 
     // Ca
-    s << "<ca>\n" << m_providerSettings.value("openvpn_ca").toString() << "\n</ca>\n";
+    s << "<ca>\n" << VpnFeatures::openvpn_ca << "\n</ca>\n";
 
     // Remote
     QString remoteParams;
-    QString protocol(getCurrentProtocol(m_providerSettings, m_appSettings));
+    QString protocol(getCurrentProtocol(m_appSettings));
     if (protocol == "udp") {
         remoteParams = "1196 udp";
     } else if (protocol == "udpl") {
@@ -584,10 +578,6 @@ void VPNGUI::onGUIReady() {
     }
 }
 
-const QSettings &VPNGUI::getBrandingSettings() const {
-    return m_providerSettings;
-}
-
 const QSettings &VPNGUI::getAppSettings() const {
     return m_appSettings;
 }
@@ -613,18 +603,13 @@ void VPNGUI::settingsChanged(const QSet<QString> &keys) {
     }
 }
 
-QString getCurrentProtocol(const QSettings &providerSettings, QSettings &appSettings) {
-    QString defaultProtocol(providerSettings.value("default_protocol", "udp").toString());
+QString getCurrentProtocol(QSettings &appSettings) {
+    QString defaultProtocol(VpnFeatures::default_protocol);
     QString currentProtocol(appSettings.value("protocol", defaultProtocol).toString());
 
     QSet<QString> knownProtocols;
-    knownProtocols << "udp" << "udpl" << "tcp";
-
-    // Check protocols are supported
-    foreach (QString p, knownProtocols) {
-        if (!providerSettings.value("protocol_" + p, false).toBool()) {
-            knownProtocols.remove(p);
-        }
+    for (auto &proto : VpnFeatures::protocols) {
+        knownProtocols << QString(proto);
     }
 
     // Check currentProtocol (to always have an option checked)

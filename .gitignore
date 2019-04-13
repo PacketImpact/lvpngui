@@ -81,3 +81,5 @@ $RECYCLE.BIN/
 provider/
 build/
 translations/*.qm
+
+CHANGELOG.html

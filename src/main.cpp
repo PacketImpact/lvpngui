@@ -1,5 +1,5 @@
-#include "vpngui.h"
 #include "config.h"
+#include "vpngui.h"
 #include <QApplication>
 #include <QMessageBox>
 #include <QTranslator>
@@ -10,6 +10,9 @@ int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
     a.setQuitOnLastWindowClosed(false);
+    a.setApplicationName(VpnFeatures::name);
+    a.setApplicationDisplayName(VpnFeatures::display_name);
+    a.setApplicationVersion(VPNGUI_VERSION);
 
     QTranslator translator;
     if (translator.load(QLocale(), QLatin1String("lvpngui"), QLatin1String("_"), QLatin1String(":/translations"))) {

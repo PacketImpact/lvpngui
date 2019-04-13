@@ -23,6 +23,8 @@ struct VPNCreds {
     QString username;
     QString password;
 
+    VPNCreds();
+    VPNCreds(const VPNCreds &) = default;
     ~VPNCreds();
     void clear();
 };
@@ -36,9 +38,9 @@ struct InitializationError : public std::exception {
     InitializationError(const QString &title_, const QString &text_)
         : title(title_), text(text_)
     {}
-    virtual ~InitializationError() throw() {}
+    //~InitializationError() noexcept {}
 
-    const char *what() const throw() {
+    virtual const char *what() const noexcept {
         return "Initialization error";
     }
 
@@ -48,7 +50,7 @@ struct InitializationError : public std::exception {
 
 // Helper to get the selected protocol, check provider settings, and
 // default/fallback to UDP.
-QString getCurrentProtocol(const QSettings &providerSettings, QSettings &appSettings);
+QString getCurrentProtocol(QSettings &appSettings);
 
 /*
  * Main app logic and notifications.
@@ -58,7 +60,7 @@ class VPNGUI : public QObject
 {
     Q_OBJECT
 public:
-    explicit VPNGUI(QObject *parent = 0);
+    explicit VPNGUI(QObject *parent = nullptr);
     ~VPNGUI();
 
     VPNCreds handleAuth(bool failed=false);
@@ -70,7 +72,6 @@ public:
     QStringList safeResolve(const QString &hostname);
     void uninstall();
 
-    const QSettings &getBrandingSettings() const;
     const QSettings &getAppSettings() const;
     const QList<VPNGateway> &getGatewayList() const;
     const Installer &getInstaller() const;
@@ -112,7 +113,6 @@ private:
     QNetworkReply *m_gatewaysReply;
     QList<VPNGateway> m_gateways;
 
-    const QSettings m_providerSettings;
     QSettings m_appSettings;
 
     QNetworkAccessManager m_qnam;

@@ -1,7 +1,6 @@
 <RCC>
     <qresource prefix="/">
         <file alias="icon.png">provider/icon.png</file>
-        <file alias="provider.ini">provider/provider.ini</file>
         <file>translations/lvpngui_fr.qm</file>
         <file>schtasks_template.xml</file>
         <file alias="icon_disabled.png">provider/icon_disabled.png</file>

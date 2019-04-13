@@ -31,7 +31,9 @@ HEADERS  += \
     src/pwstore.h \
     src/authdialog.h \
     src/logwindow.h \
-    src/settingswindow.h
+    src/settingswindow.h \
+    provider/provider.h \
+    provider_default/provider.h
 
 FORMS    += \
     src/authdialog.ui \
@@ -48,7 +50,6 @@ QMAKE_CXXFLAGS += -static-libgcc -static-libstdc++
 DISTFILES += \
     lvpngui.manifest \
     schtasks_template.xml \
-    provider_default/provider.ini \
     lvpngui.rc
 
 
@@ -68,8 +69,6 @@ win32 {
 
     WIN_PWD = $$replace(PWD, /, \\)
     OUT_PWD_WIN = $$replace(OUT_PWD, /, \\)
-
-    DEFINES += "VERSION_PROVIDER=$$system(Powershell.exe -NoProfile -ExecutionPolicy Bypass -File $$WIN_PWD\\provider_version.ps1)"
 
     Release:QMAKE_POST_LINK = "$$shell_quote(C:/Program Files/Microsoft SDKs/Windows/v6.0A/bin/mt.exe) -manifest $$shell_quote($$WIN_PWD\\$$basename(TARGET).manifest) -outputresource:$$shell_quote($$OUT_PWD_WIN\\${DESTDIR_TARGET};1)"
 }

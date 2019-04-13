@@ -75,8 +75,7 @@ void SettingsWindow::saveAndClose() {
 }
 
 void SettingsWindow::loadSettings() {
-    const QSettings &providerSettings(m_vpngui.getBrandingSettings());
-    QString currentProtocol(getCurrentProtocol(providerSettings, m_appSettings));
+    QString currentProtocol(getCurrentProtocol(m_appSettings));
 
     // Protocol radio
     if (currentProtocol == "udp") {
@@ -88,7 +87,7 @@ void SettingsWindow::loadSettings() {
     }
 
     // IPv6
-    if (providerSettings.value("enable_ipv6", true).toBool()) {
+    if (VpnFeatures::ipv6) {
         ui->ipv6Checkbox->setChecked(m_appSettings.value("ipv6_tunnel", true).toBool());
     } else {
         ui->ipv6Checkbox->setVisible(false);
@@ -119,14 +118,10 @@ void SettingsWindow::loadSettings() {
 }
 
 void SettingsWindow::saveSettings() {
-    // TODO: check input validity
-    const QSettings &providerSettings(m_vpngui.getBrandingSettings());
-
     QHash<QString, QVariant> previousSettings;
     foreach (QString key, m_appSettings.allKeys()) {
         previousSettings[key] = m_appSettings.value(key);
     }
-
 
     // Protocol radio
     QString currentProtocol;
@@ -140,7 +135,7 @@ void SettingsWindow::saveSettings() {
     m_appSettings.setValue("protocol", currentProtocol);
 
     // IPv6
-    if (providerSettings.value("enable_ipv6", true).toBool()) {
+    if (VpnFeatures::ipv6) {
         m_appSettings.setValue("ipv6_tunnel", ui->ipv6Checkbox->isChecked());
     }
 

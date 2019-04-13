@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Settings: move actions to the main tab
 ### Added
 - Settings: add "Reinstall TAP" button
-- Settings: add "#$ server ..." syntax for testing servers
+- Settings: add "#$ server ..." syntax for adding servers
 
 ## 1.0.0 - 2016-06-20
 Initial version.
