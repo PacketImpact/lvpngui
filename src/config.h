@@ -15,7 +15,7 @@
 #define VPNGUI_VERSION_MAJOR 1
 #define VPNGUI_VERSION_MINOR 1
 #define VPNGUI_VERSION_PATCH 0
-#define VPNGUI_VERSION_BUILD "-rc1"
+#define VPNGUI_VERSION_BUILD ""
 
 
 // LVPNGUI copyright and default values

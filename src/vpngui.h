@@ -34,6 +34,8 @@ struct VPNGateway {
     QString hostname;
 };
 
+struct SilentError : public std::exception {};
+
 struct InitializationError : public std::exception {
     InitializationError(const QString &title_, const QString &text_)
         : title(title_), text(text_)

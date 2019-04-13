@@ -1,8 +1,9 @@
-Param([Parameter(Mandatory=$true)][string[]$Dir)
+Param([Parameter(Mandatory=$true)][string]$Dir)
 
 function Hash-Files([string]$dir) {
 	$basePath = Resolve-Path $dir
 	$files = Get-ChildItem -Path $dir -File -Force -Recurse |
+		where {$_.Name -ne 'index.txt' } |
 		% {join-path -Path $dir -ChildPath $_.Name}
 	$hashes = Get-FileHash $files -Algorithm SHA1 | Select "Hash", "Path"
 	foreach ($row in $hashes) {

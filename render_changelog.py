@@ -30,6 +30,9 @@ root = os.path.dirname(os.path.abspath(__file__))
 i_path = os.path.join(root, 'CHANGELOG.md')
 o_path = os.path.join(root, 'CHANGELOG.html')
 
+if os.path.getmtime(i_path) <= os.path.getmtime(o_path):
+	exit(0)
+
 with open(i_path, 'r') as i:
 	with open(o_path, 'w') as o:
 		text = i.read()

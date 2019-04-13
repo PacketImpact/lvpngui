@@ -23,6 +23,9 @@ int main(int argc, char *argv[])
         VPNGUI w;
         return a.exec();
     }
+    catch(SilentError) {
+        return 1;
+    }
     catch(InitializationError &e) {
         qDebug() << "InitializationError: \n" << e.title << "\n" << e.text;
         QMessageBox::warning(nullptr, e.title, e.text);

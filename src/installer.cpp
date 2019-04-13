@@ -303,7 +303,9 @@ Installer::State Installer::getInstallState() {
         }
         QString new_hash = QString(hasher.result().toHex());
         if (new_hash != hash) {
-            qDebug() << "Installer: different hash for " << path << ": " << new_hash;
+            qDebug() << "calculated hash:" << new_hash;
+            qDebug() << "expected hash  :" << hash;
+            qDebug() << "Installer: different hash for " << path;
             return NotInstalled;
         }
     }

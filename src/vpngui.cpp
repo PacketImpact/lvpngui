@@ -107,19 +107,41 @@ VPNGUI::VPNGUI(QObject *parent)
         m_installer.getDir().mkpath(".");
     }
 
-    if(!m_lockFile.tryLock(100)) {
-        throw InitializationError(getName(), tr("%1 is already running.").arg(getName()));
-    }
-
     Installer::State installState = m_installer.getInstallState();
+
+    QString already_running(tr("%1 is already running.").arg(getName()));
+
     if (installState == Installer::NotInstalled) {
+        while (!m_lockFile.tryLock(100)) {
+            // If we can't lock:
+            // NotInstalled and already running means it's an upgrade.
+            // We ask to close the older version so we can do the upgrade
+            QString text(tr("Please close it and retry. "));
+            auto r = QMessageBox::warning(nullptr, already_running,
+                                          already_running + " " + text,
+                                          QMessageBox::Cancel | QMessageBox::Retry,
+                                          QMessageBox::Retry);
+
+            if (r == QMessageBox::Cancel) {
+                throw SilentError();
+            }
+        }
+
         m_installer.install();
         m_trayIcon.showMessage(tr("Installed"),
                                tr("%1 is now installed! (version %2)")
                                .arg(getDisplayName(), getFullVersion()));
+        // TODO: do we start the new process here and throw SilentError()?
     }
     else if (installState == Installer::HigherVersionFound) {
         throw InitializationError(getName(), tr("%1 is already installed with a higher version.").arg(getName()));
+    }
+    else {
+        // The same version is installed
+        if (!m_lockFile.tryLock(100)) {
+            // The same version is already running.
+            throw InitializationError(getName(), already_running);
+        }
     }
 
     m_connectMenu = m_trayMenu.addMenu(tr("Connect"));
