@@ -420,20 +420,25 @@ Installer::State Installer::install() {
         QSettings reg(regPath, QSettings::NativeFormat);
         reg.beginGroup(getGuid());
 
+        // backslashes (or bullshit)
+        QString bsRootPath(getDir().path().replace("/", "\\"));
+        QString bsAppLocPath(appLocPath.replace("/", "\\"));
+        QString bsBinPath(qApp->applicationFilePath().replace("/", "\\"));
+
         // Display
         reg.setValue("DisplayName", VpnFeatures::display_name);
         reg.setValue("DisplayVersion", VPNGUI_VERSION);
         reg.setValue("Publisher", VpnFeatures::display_name);
-        reg.setValue("DisplayIcon", appLocPath);
+        reg.setValue("DisplayIcon", bsAppLocPath);
         // Version
         reg.setValue("VersionMinor", VPNGUI_VERSION_MINOR);
         reg.setValue("VersionMajor", VPNGUI_VERSION_MAJOR);
         reg.setValue("Version", VPNGUI_VERSION);
         // Installation
         reg.setValue("InstallDate", QDate::currentDate().toString("yyyyMMdd"));
-        reg.setValue("InstallLocation", getDir().path());
-        reg.setValue("InstallSource", qApp->applicationFilePath());
-        reg.setValue("UninstallString", appLocPath + " --uninstall");
+        reg.setValue("InstallLocation", bsRootPath);
+        reg.setValue("InstallSource", bsBinPath);
+        reg.setValue("UninstallString", "\"" + bsAppLocPath + "\" \"--uninstall\"");
         // Attributes
         reg.setValue("NoModify", 1);
         reg.setValue("NoRepair", 1);
@@ -520,8 +525,12 @@ void Installer::uninstall(bool waitForOpenVPN) {
         auto regPath = "HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall";
         QSettings reg(regPath, QSettings::NativeFormat);
         reg.beginGroup(getGuid());
-        reg.remove("");
-        reg.endGroup();
+        if (!reg.isWritable()) {
+            QMessageBox::warning(nullptr, "Error", "Unable to write uninstall entry");
+        } else {
+            reg.remove("");
+            reg.endGroup();
+        }
     }
 
     // The main .exe and .lock files should still exist now
@@ -539,6 +548,22 @@ void Installer::uninstall(bool waitForOpenVPN) {
             MoveFileEx(szExistingFile, nullptr, MOVEFILE_DELAY_UNTIL_REBOOT);
         }
     }
+}
+
+void Installer::uninstallTAP() {
+    QSettings reg("HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\TAP-Windows");
+    QString path(reg.value("UninstallString").toString());
+
+    if (path.isEmpty()) {
+        return;
+    }
+
+    QFile file(path);
+    if (!file.exists()) {
+        return;
+    }
+
+    QProcess::startDetached(path);
 }
 
 void Installer::loadIndex() {

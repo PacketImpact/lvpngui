@@ -32,7 +32,17 @@ int main(int argc, char *argv[])
     parser.addOption(uninstallOpt);
     QCommandLineOption checkInstallOpt("check-install");
     parser.addOption(checkInstallOpt);
+    QCommandLineOption renameBinaryOpt("rename-binary");
+    parser.addOption(renameBinaryOpt);
     parser.process(a);
+
+    if (parser.isSet(renameBinaryOpt)) {
+        QString newName("%1-%2.exe");
+        newName = newName.arg(QString(VpnFeatures::name).toLower(), VPNGUI_VERSION);
+        QFile f(a.applicationFilePath());
+        f.rename(newName);
+        return 0;
+    }
 
     try {
         Installer installer;

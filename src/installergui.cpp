@@ -38,6 +38,8 @@ void InstallerGUI::run() {
         m_installer.install();
         QString msg(tr("%1 is now installed! (version %2)"));
         msg = msg.arg(VpnFeatures::display_name, VPNGUI_VERSION);
+        msg += "\n";
+        msg += tr("See the system tray icon to connect.");
         QMessageBox::information(nullptr, tr("Installed"), msg, QMessageBox::Ok);
         // TODO: do we start the new process here and throw SilentError()?
     }
@@ -67,6 +69,18 @@ void InstallerGUI::runUninstall() {
     }
 
     m_installer.uninstall();
+
+    QString msg(tr("%1 has been uninstalled."));
+    msg += "\n";
+    msg += tr("Do you want to uninstall TAP-Windows too? (may be used by other VPN softwares)");
+    msg = msg.arg(VpnFeatures::display_name);
+    auto r = QMessageBox::information(nullptr, tr("Uninstalled"), msg, QMessageBox::Yes | QMessageBox::No);
+
+    if (r == QMessageBox::No) {
+        return;
+    }
+
+    m_installer.uninstallTAP();
 }
 
 void InstallerGUI::runCheckInstall() {
