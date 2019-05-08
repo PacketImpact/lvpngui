@@ -7,6 +7,7 @@
 #include <QTranslator>
 #include <QLockFile>
 #include <QObject>
+#include <QCommandLineParser>
 #include <stdexcept>
 #include <fstream>
 
@@ -24,10 +25,28 @@ int main(int argc, char *argv[])
         a.installTranslator(&translator);
     }
 
+    QCommandLineParser parser;
+    parser.addHelpOption();
+    parser.addVersionOption();
+    QCommandLineOption uninstallOpt("uninstall");
+    parser.addOption(uninstallOpt);
+    QCommandLineOption checkInstallOpt("check-install");
+    parser.addOption(checkInstallOpt);
+    parser.process(a);
+
     try {
         Installer installer;
         QLockFile lockFile(installer.getDir().filePath("lvpngui.lock"));
         InstallerGUI installerGUI(installer, lockFile);
+
+        if (parser.isSet(uninstallOpt)) {
+            installerGUI.runUninstall();
+            return 0;
+        }
+        if (parser.isSet(checkInstallOpt)) {
+            installerGUI.runCheckInstall();
+            return 0;
+        }
 
         installerGUI.run();
 

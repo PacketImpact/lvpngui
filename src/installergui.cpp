@@ -52,3 +52,42 @@ void InstallerGUI::run() {
         }
     }
 }
+
+void InstallerGUI::runUninstall() {
+    while (!m_lockFile.tryLock(100)) {
+        QString text(tr("Please close it and retry. "));
+        auto r = QMessageBox::warning(nullptr, QString(VpnFeatures::display_name),
+                                      text,
+                                      QMessageBox::Cancel | QMessageBox::Retry,
+                                      QMessageBox::Retry);
+
+        if (r == QMessageBox::Cancel) {
+            throw SilentError();
+        }
+    }
+
+    m_installer.uninstall();
+}
+
+void InstallerGUI::runCheckInstall() {
+    QString status("unknown");
+    Installer::State installState = m_installer.detectState();
+    if (installState == Installer::NotInstalled) {
+        status = "Not installed";
+    } else if (installState == Installer::Installed) {
+        status = "Installed and up to date";
+    } else if (installState == Installer::HigherVersionFound) {
+        status = "Installed, upgrade possible";
+    }
+
+    QString title("Installation Status");
+    QString text;
+    text.append(QString("Status: %1\n").arg(status));
+    text.append(QString("GUID: %1\n").arg(m_installer.getGuid()));
+    text.append(QString("Dir: %1\n").arg(m_installer.getDir().path()));
+
+    QMessageBox mb(QMessageBox::Information, title,
+                   text, QMessageBox::Ok);
+    mb.setTextInteractionFlags(Qt::TextSelectableByMouse);
+    mb.exec();
+}

@@ -414,6 +414,36 @@ Installer::State Installer::install() {
         }
     }
 
+    // Make an uninstall entry
+    {
+        auto regPath = "HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall";
+        QSettings reg(regPath, QSettings::NativeFormat);
+        reg.beginGroup(getGuid());
+
+        // Display
+        reg.setValue("DisplayName", VpnFeatures::display_name);
+        reg.setValue("DisplayVersion", VPNGUI_VERSION);
+        reg.setValue("Publisher", VpnFeatures::display_name);
+        reg.setValue("DisplayIcon", appLocPath);
+        // Version
+        reg.setValue("VersionMinor", VPNGUI_VERSION_MINOR);
+        reg.setValue("VersionMajor", VPNGUI_VERSION_MAJOR);
+        reg.setValue("Version", VPNGUI_VERSION);
+        // Installation
+        reg.setValue("InstallDate", QDate::currentDate().toString("yyyyMMdd"));
+        reg.setValue("InstallLocation", getDir().path());
+        reg.setValue("InstallSource", qApp->applicationFilePath());
+        reg.setValue("UninstallString", appLocPath + " --uninstall");
+        // Attributes
+        reg.setValue("NoModify", 1);
+        reg.setValue("NoRepair", 1);
+        reg.setValue("WindowsInstaller", 0);
+        // Size (installer kb * 2)
+        // a bold assumption but do we want to do more here
+        qint64 kbInstallSize = QFile(qApp->applicationFilePath()).size() / 1024;
+        reg.setValue("EstimatedSize", static_cast<qint32>(kbInstallSize * 2));
+    }
+
     return Installed;
 }
 
@@ -483,6 +513,15 @@ void Installer::uninstall(bool waitForOpenVPN) {
         if (shortcut.symLinkTarget() == appExePath) {
             shortcut.remove();
         }
+    }
+
+    // Remove the uninstall entry
+    {
+        auto regPath = "HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall";
+        QSettings reg(regPath, QSettings::NativeFormat);
+        reg.beginGroup(getGuid());
+        reg.remove("");
+        reg.endGroup();
     }
 
     // The main .exe and .lock files should still exist now
@@ -587,4 +626,13 @@ bool Installer::setStartOnBoot(bool enabled) {
         }
     }
     return true;
+}
+
+QUuid Installer::getUuid() const {
+    QUuid ns(VPNGUI_UUID);
+    return QUuid::createUuidV5(ns, QString(VpnFeatures::name));
+}
+
+QString Installer::getGuid() const {
+    return getUuid().toString().toUpper();
 }

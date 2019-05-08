@@ -29,6 +29,8 @@ public:
     explicit InstallerGUI(Installer &installer, QLockFile &lockFile, QObject *parent = nullptr);
 
     void run();
+    void runUninstall();
+    void runCheckInstall();
 
 signals:
 

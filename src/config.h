@@ -27,6 +27,7 @@
 #define VPNGUI_URL "https://packetimpact.net/lvpngui"
 
 #define VPNGUI_EXENAME "lvpngui.exe"
+#define VPNGUI_UUID "51891d83-a897-4969-b875-b5d5241e85cf"
 
 
 // OpenVPN version to run (must be present in the .qrc)

@@ -5,6 +5,7 @@
 #include <QFile>
 #include <QDir>
 #include <QMap>
+#include <QUuid>
 
 class VPNGUI;
 
@@ -36,6 +37,8 @@ public:
     bool setStartOnBoot(bool enabled);
 
     inline QDir getDir() const { return m_baseDir; }
+    QUuid getUuid() const;
+    QString getGuid() const;
 
 private:
     QString getArch();
