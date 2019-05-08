@@ -226,10 +226,9 @@ QByteArray hashFile(QString path) {
     return hasher.result();
 }
 
-Installer::Installer(const VPNGUI &vpngui)
-    : m_vpngui(vpngui)
-{
-    m_baseDir = QDir(QDir(qgetenv("APPDATA")).filePath(VPNGUI_ORGNAME "/" + m_vpngui.getName()));
+Installer::Installer() {
+    QString appDataDir(QString(VPNGUI_ORGNAME "/") + VpnFeatures::name);
+    m_baseDir = QDir(QDir(qgetenv("APPDATA")).filePath(appDataDir));
     loadIndex();
 }
 
@@ -244,7 +243,7 @@ QString Installer::getArch() {
     throw std::runtime_error("Unsupported arch: " + arch.toStdString());
 }
 
-Installer::State Installer::getInstallState() {
+Installer::State Installer::detectState() {
     // Check installed version and hash
     {
         QString appSrcPath = QCoreApplication::applicationFilePath();
@@ -255,11 +254,11 @@ Installer::State Installer::getInstallState() {
             qDebug() << "Installer: failed to read version file: " << versionPath;
             return NotInstalled;
         }
-        if (v.name != m_vpngui.getName()) {
+        if (v.name != VpnFeatures::name) {
             qDebug() << "Installer: version file: different name";
             return NotInstalled;
         }
-        if (v.version == m_vpngui.getFullVersion()) {
+        if (v.version == VPNGUI_VERSION) {
             // Same version, check hash if not the same exe file
             if (appSrcPath != appLocPath) {
                 QByteArray appSrcHash = hashFile(appSrcPath);
@@ -270,7 +269,7 @@ Installer::State Installer::getInstallState() {
                 }
             }
         }
-        else if (versionHigherThan(m_vpngui.getFullVersion(), v.version)) {
+        else if (versionHigherThan(QString(VPNGUI_VERSION), v.version)) {
             // This is a newer version
             qDebug() << "Installer: found older version";
             return NotInstalled;
@@ -336,7 +335,7 @@ Installer::State Installer::install() {
         if (!versionFile.open(QFile::WriteOnly)) {
             throw std::runtime_error("Cannot write file: " + versionPath.toStdString());
         }
-        QString content(m_vpngui.getName() + " " + m_vpngui.getFullVersion());
+        QString content(QString(VpnFeatures::name) + " " + QString(VPNGUI_VERSION));
         versionFile.write(content.toUtf8());
         versionFile.close();
     }
@@ -362,8 +361,8 @@ Installer::State Installer::install() {
             while (!QFile(appLocPath).remove()) {
                 QMessageBox::StandardButton r;
                 QString msg(QCoreApplication::tr("%1 is already running. Please close it to upgrade."));
-                msg = msg.arg(m_vpngui.getDisplayName());
-                r = QMessageBox::warning(nullptr, m_vpngui.getDisplayName(), msg,
+                msg = msg.arg(VpnFeatures::display_name);
+                r = QMessageBox::warning(nullptr, VpnFeatures::display_name, msg,
                                          QMessageBox::Cancel | QMessageBox::Ok);
                 if (r == QMessageBox::Cancel) {
                     return NotInstalled;
@@ -385,6 +384,8 @@ Installer::State Installer::install() {
         installTAP();
     }
 
+    QString linkFilename = QString(VpnFeatures::display_name) + ".lnk";
+
     // Make Start menu shortcut
     {
         QDir appdataDir(QString(qgetenv("APPDATA")));
@@ -392,8 +393,8 @@ Installer::State Installer::install() {
         if (!startMenuDir.exists()) {
             startMenuDir.mkpath(".");
         }
-        QString shortcut(startMenuDir.filePath(m_vpngui.getDisplayName() + ".lnk"));
-        if (!createLink(shortcut, appLocPath, m_vpngui.getDisplayName())) {
+        QString shortcut(startMenuDir.filePath(linkFilename));
+        if (!createLink(shortcut, appLocPath, VpnFeatures::display_name)) {
             throw std::runtime_error("Failed to create start menu link: " + shortcut.toStdString() + " -> " + appLocPath.toStdString());
         }
     }
@@ -401,13 +402,13 @@ Installer::State Installer::install() {
     // Make a desktop shortcut
     {
         QString lnkMsg(QCoreApplication::tr("%1 has been installed. Create a desktop shortcut?"));
-        lnkMsg = lnkMsg.arg(m_vpngui.getDisplayName());
-        QMessageBox::StandardButton r = QMessageBox::question(nullptr, m_vpngui.getDisplayName(), lnkMsg);
+        lnkMsg = lnkMsg.arg(VpnFeatures::display_name);
+        QMessageBox::StandardButton r = QMessageBox::question(nullptr, VpnFeatures::display_name, lnkMsg);
         if (r == QMessageBox::Yes) {
             QDir homeDir(QString(qgetenv("USERPROFILE")));
             QDir desktopDir(homeDir.filePath("Desktop"));
-            QString shortcut(desktopDir.filePath(m_vpngui.getDisplayName() + ".lnk"));
-            if (!createLink(shortcut, appLocPath, m_vpngui.getDisplayName())) {
+            QString shortcut(desktopDir.filePath(linkFilename));
+            if (!createLink(shortcut, appLocPath, VpnFeatures::display_name)) {
                 throw std::runtime_error("Failed to create link: " + shortcut.toStdString() + " -> " + appLocPath.toStdString());
             }
         }
@@ -461,11 +462,13 @@ void Installer::uninstall(bool waitForOpenVPN) {
 
     m_baseDir.removeRecursively();
 
+    QString linkFilename = QString(VpnFeatures::display_name) + ".lnk";
+
     // Now the desktop shortcut
     {
         QDir homeDir(QString(qgetenv("USERPROFILE")));
         QDir desktopDir(homeDir.filePath("Desktop"));
-        QString shortcutPath(desktopDir.filePath(m_vpngui.getDisplayName() + ".lnk"));
+        QString shortcutPath(desktopDir.filePath(linkFilename));
         QFile shortcut(shortcutPath);
         if (shortcut.symLinkTarget() == appExePath) {
             shortcut.remove();
@@ -476,7 +479,7 @@ void Installer::uninstall(bool waitForOpenVPN) {
     {
         QDir appdataDir(QString(qgetenv("APPDATA")));
         QDir startMenuDir(appdataDir.filePath("Microsoft\\Windows\\Start Menu\\Programs"));
-        QFile shortcut(startMenuDir.filePath(m_vpngui.getDisplayName() + ".lnk"));
+        QFile shortcut(startMenuDir.filePath(linkFilename));
         if (shortcut.symLinkTarget() == appExePath) {
             shortcut.remove();
         }
@@ -523,7 +526,7 @@ void Installer::loadIndex() {
 
 bool Installer::setStartOnBoot(bool enabled) {
     QString program("schtasks");
-    QString taskName(m_vpngui.getName() + "StartTask");
+    QString taskName(QString(VpnFeatures::name) + "StartTask");
     QString taskRun = m_baseDir.filePath(VPNGUI_EXENAME);
 
     QFile tpl(":/schtasks_template.xml");

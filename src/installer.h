@@ -26,9 +26,9 @@ public:
         HigherVersionFound,
     };
 
-    Installer(const VPNGUI &vpngui);
+    Installer();
 
-    State getInstallState();
+    State detectState();
     State install();
     void installTAP() const;
     void uninstall(bool waitForOpenVPN=true);
@@ -42,7 +42,6 @@ private:
     void loadIndex();
     void extractFile(const QString &src, const QString &dst);
 
-    const VPNGUI &m_vpngui;
     QDir m_baseDir;
     QMap<QString, QString> m_index;
 };

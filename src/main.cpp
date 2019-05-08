@@ -1,10 +1,15 @@
 #include "config.h"
 #include "vpngui.h"
+#include "installer.h"
+#include "installergui.h"
 #include <QApplication>
 #include <QMessageBox>
 #include <QTranslator>
+#include <QLockFile>
+#include <QObject>
 #include <stdexcept>
 #include <fstream>
+
 
 int main(int argc, char *argv[])
 {
@@ -20,7 +25,13 @@ int main(int argc, char *argv[])
     }
 
     try {
-        VPNGUI w;
+        Installer installer;
+        QLockFile lockFile(installer.getDir().filePath("lvpngui.lock"));
+        InstallerGUI installerGUI(installer, lockFile);
+
+        installerGUI.run();
+
+        VPNGUI w(installer);
         return a.exec();
     }
     catch(SilentError) {

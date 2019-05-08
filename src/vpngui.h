@@ -34,22 +34,6 @@ struct VPNGateway {
     QString hostname;
 };
 
-struct SilentError : public std::exception {};
-
-struct InitializationError : public std::exception {
-    InitializationError(const QString &title_, const QString &text_)
-        : title(title_), text(text_)
-    {}
-    //~InitializationError() noexcept {}
-
-    virtual const char *what() const noexcept {
-        return "Initialization error";
-    }
-
-    QString title;
-    QString text;
-};
-
 // Helper to get the selected protocol, check provider settings, and
 // default/fallback to UDP.
 QString getCurrentProtocol(QSettings &appSettings);
@@ -62,7 +46,7 @@ class VPNGUI : public QObject
 {
     Q_OBJECT
 public:
-    explicit VPNGUI(QObject *parent = nullptr);
+    explicit VPNGUI(Installer &installer, QObject *parent = nullptr);
     ~VPNGUI();
 
     VPNCreds handleAuth(bool failed=false);
@@ -118,14 +102,13 @@ private:
     QSettings m_appSettings;
 
     QNetworkAccessManager m_qnam;
-    Installer m_installer;
+    Installer &m_installer;
     OpenVPN m_openvpn;
 
     LogWindow *m_logWindow;
     SettingsWindow *m_settingsWindow;
 
     QDir m_configDir;
-    QLockFile m_lockFile;
 };
 
 #endif // VPNGUI_H

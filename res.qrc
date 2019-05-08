@@ -6,6 +6,7 @@
         <file alias="icon_disabled.png">provider/icon_disabled.png</file>
         <file>CHANGELOG.md</file>
         <file>CHANGELOG.html</file>
+        <file>provider/provider.h</file>
     </qresource>
     <qresource prefix="/openvpn">
         <file>openvpn-v2.4-32/index.txt</file>

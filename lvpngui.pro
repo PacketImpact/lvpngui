@@ -14,6 +14,7 @@ TEMPLATE = app
 CONFIG += c++11
 
 SOURCES += \
+    src/installergui.cpp \
     src/main.cpp \
     src/vpngui.cpp \
     src/installer.cpp \
@@ -24,6 +25,7 @@ SOURCES += \
     src/settingswindow.cpp
 
 HEADERS  += \
+    src/installergui.h \
     src/vpngui.h \
     src/installer.h \
     src/config.h \
